@@ -33,17 +33,21 @@ runs:
   steps:
     - shell: bash
       run: |
+        is_installed() {
+          apt-cache policy "$1" | grep 'Installed:' | grep -v '(none)' > /dev/null
+        }
+
         packages=""
-        if [ ! ${{ github.action_path }}/is-installed.sh systemd-container ]; then
+        if ! is_installed systemd-container; then
           packages="$packages systemd-container"
         fi
-        if [ ! ${{ github.action_path }}/is-installed.sh qemu-user-static ]; then
+        if ! is_installed qemu-user-static; then
           packages="$packages qemu-user-static"
         fi
-        if [ ! ${{ github.action_path }}/is-installed.sh binfmt-support ]; then
+        if ! is_installed binfmt-support; then
           packages="$packages binfmt-support"
         fi
-        if [ ! -z "$(echo "$packages")" ]; then
+        if ! -z "$(echo "$packages")"; then
           echo "Installing dependencies to run systemd-nspawn on non-amd64 images..."
           sudo apt-get update
           sudo apt-get install $packages
