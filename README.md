@@ -24,7 +24,6 @@ GitHub action.
   with:
     image: rpi-os-image.img
     run: |
-      echo $SHELL
       apt-get update
       apt-get install -y cowsay
       /usr/games/cowsay 'I am running in a light-weight namespace container!'
@@ -33,7 +32,7 @@ GitHub action.
 ### Run shell commands in a specific shell
 
 ```yaml
-- name: Run Python
+- name: Run in Python
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
@@ -48,7 +47,7 @@ GitHub action.
 ### Run shell commands as the `pi` user
 
 ```yaml
-- name: 
+- name: Run without root permissions
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
@@ -62,11 +61,11 @@ GitHub action.
 ### Run a specific command without a shell
 
 ```yaml
-- name: Check os-release
+- name: Print shell
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    shell: cat /usr/lib/os-release
+    shell: echo "This variable won't be replaced because there's no shell: $SHELL"
 ```
 
 ### Run shell commands with one or more bind mounts from the host OS

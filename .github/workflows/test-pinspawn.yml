@@ -37,28 +37,33 @@ jobs:
           mode: to
           size: 8G
 
+      # Run shell commands
+
       - name: Install and run cowsay
         uses: ./
         with:
           image: rpi-os-image.img
           run: |
-            echo $SHELL
             apt-get update
             apt-get install -y cowsay
             /usr/games/cowsay 'I am running in a light-weight namespace container!'
 
-      - name: Run Python
+      # Run shell commands in a specific shell
+
+      - name: Run in Python
         uses: ./
         with:
           image: rpi-os-image.img
           shell: python
           run: |
-            echo $SHELL
-            apt-get update
-            apt-get install -y cowsay
-            /usr/games/cowsay 'I am running in a light-weight namespace container!'
+            import platform
 
-      - name: Run unprivileged shell commands
+            for word in reversed(['!', platform.python_version(), 'Python', 'in', 'running', 'am', 'I']):
+              print(word, end=' ')
+
+      # Run shell commands as the pi user
+
+      - name: Run without root permissions
         uses: ./
         with:
           image: rpi-os-image.img
@@ -68,11 +73,15 @@ jobs:
             sudo apt-get install -y figlet
             figlet "I am $USER!"
 
-      - name: Check os-release
+      # Run a specific command without a shell
+
+      - name: Print shell
         uses: ./
         with:
           image: rpi-os-image.img
-          shell: cat /usr/lib/os-release
+          shell: echo "This variable won't be replaced because there's no shell: $SHELL"
+
+      # Run shell commands with one or more bind mounts from the host OS
 
       - name: Make a bootloader configuration snippet
         uses: 1arp/create-a-file-action@0.4.5
@@ -93,6 +102,8 @@ jobs:
 
       - name: Print the bootloader config
         run: cat boot.config
+
+      # Run shell commands in a booted container
 
       - name: Analyze systemd boot process
         uses: ./
