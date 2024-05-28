@@ -74,7 +74,7 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    args: --bind ./:/run/external
+    args: --bind "$(pwd)"/figlet.sh:/run/external/figlet.sh
     user: pi
     shell: /run/external/figlet.sh
 
@@ -95,7 +95,7 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    args: --bind ./:/run/external
+    args: --bind "$(pwd)":/run/external
     run: |
       cat /run/external/boot-config.snippet >> /boot/config.txt
       cp /boot/config.txt /run/external/boot.config

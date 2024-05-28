@@ -117,7 +117,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          args: --bind ./:/run/external
+          args: --bind "$(pwd)":/run/external
           run: |
             cat /run/external/boot-config.snippet >> /boot/config.txt
             cp /boot/config.txt /run/external/boot.config
@@ -131,7 +131,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          args: --bind ./:/run/external
+          args: --bind "$(pwd)":/run/external
           boot: true
           run: |
             systemd-analyze blame
