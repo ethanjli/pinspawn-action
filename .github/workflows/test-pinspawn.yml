@@ -83,7 +83,7 @@ jobs:
           run: |
             sudo apt-get update
             sudo apt-get install -y figlet
-            figlet -f bubble "I am $USER in $SHELL!"
+            figlet -f bubble "I am $USER!"
 
       # Run an external script directly, with the shell selected by the shebang line
 
