@@ -16,7 +16,7 @@ GitHub action.
 
 ## Basic Usage Examples
 
-### Run shell commands
+### Run shell commands as root
 
 ```yaml
 - name: Install and run cowsay
@@ -52,34 +52,31 @@ GitHub action.
   with:
     image: rpi-os-image.img
     user: pi
+    shell: sh
     run: |
       sudo apt-get update
       sudo apt-get install -y figlet
       figlet -f digital "I am $USER in $SHELL!"
 ```
 
-### Run a script directly, without any subshell
+### Run an external script directly, with the shell selected by its shebang line
 
 ```yaml
-- name: Run script directly, without any subshell
-  uses: ./
+- name: Make a script on the host
+  uses: 1arp/create-a-file-action@0.4.5
   with:
-    image: rpi-os-image.img
-    shell: '{0}'
-    run: |
+    file: figlet.sh
+    content: |
       #!/usr/bin/env -S bash -eux
       figlet -f digital "I am $USER in $SHELL!"
-```
 
-### Run a specific command without a shell
-
-```yaml
 - name: Print shell
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    shell: >
-      echo "This variable won't be replaced because there's no shell: $SHELL"
+    args: --bind ./:/run/external
+    user: pi
+    shell: /run/external/figlet.sh
 
 ```
 
@@ -162,9 +159,8 @@ Inputs:
   Please refer to the GitHub Actions semantics of the `shell` keyword of job steps for details
   about the behavior of this action's `shell` input.
 
-  If you want to run a single custom command without a shell, you should leave `run` empty and
-  provide a custom command as the `shell` input. However, you may need to run the command as the
-  `root` user.
+  If you just want to run a single script, you can leave `run` empty and provide that script as the
+  `shell` input. However, you will need to set the appropriate permissions on the script file.
 
 - If `boot` is enabled, this action will use `systemd-nspawn` to automatically search for an init
   program in the image (typically systemd) and invoke it as PID 1, instead of a shell.

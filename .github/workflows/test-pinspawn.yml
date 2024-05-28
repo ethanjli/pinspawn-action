@@ -37,8 +37,7 @@ jobs:
           mode: to
           size: 8G
 
-      # Run shell commands
-
+      # Run shell commands as root
 
       - name: Install and run cowsay
         uses: ./
@@ -50,7 +49,6 @@ jobs:
             /usr/games/cowsay 'I am running in a light-weight namespace container!'
 
       # Run shell commands in a specific shell
-
 
       - name: Run in Python
         uses: ./
@@ -81,30 +79,29 @@ jobs:
         with:
           image: rpi-os-image.img
           user: pi
+          shell: sh
           run: |
             sudo apt-get update
             sudo apt-get install -y figlet
             figlet -f bubble "I am $USER in $SHELL!"
 
-      # Run a script directly, without any subshell
+      # Run an external script directly, with the shell selected by the shebang line
+
+      - name: Make a script on the host
+        uses: 1arp/create-a-file-action@0.4.5
+        with:
+          file: figlet.sh
+          content: |
+            #!/usr/bin/env -S bash -eux
+            figlet -f digital "I am $USER in $SHELL!"
 
       - name: Run script directly
         uses: ./
         with:
           image: rpi-os-image.img
-          shell: '{0}'
-          run: |
-            #!/usr/bin/env -S bash -eux
-            figlet -f digital "I am $USER in $SHELL!"
-
-      # Run a specific command without a shell
-
-      - name: Print shell
-        uses: ./
-        with:
-          image: rpi-os-image.img
-          shell: >
-            echo "This variable won't be replaced because there's no shell: $SHELL"
+          args: --bind ./:/run/external
+          user: pi
+          shell: /run/external/figlet.sh
 
       # Run shell commands with one or more bind mounts from the host OS
 
