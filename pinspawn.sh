@@ -7,7 +7,11 @@ mount_image() {
   sysroot="${2:-}"
 
   echo "Mounting $image..." 1>&2
-  device="$(losetup -fP --show "$image")"
+  device="$(sudo losetup -fP --show "$image")"
+  if [ -z "$device" ]; then
+    echo "Error: couldn't mount $image!"
+    return 1
+  fi
   echo "Mounted to $device!" 1>&2
 
   if [ -z "$sysroot" ]; then
@@ -16,7 +20,7 @@ mount_image() {
   fi
 
   echo "Mounting $device..." 1>&2
-  mkdir -p "$sysroot"
+  sudo mkdir -p "$sysroot"
   sudo mount "${device}p2" "$sysroot" 1>&2
   sudo mount "${device}p1" "$sysroot/boot" 1>&2
   echo "Mounted to $sysroot!" 1>&2
@@ -49,10 +53,7 @@ shell_command="${4:-}" # e.g. "su - pi bash -e {0}"
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
 
-ls "$sysroot"
-ls "$sysroot/usr"
-
-tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
+tmp_script="$(sudo mktemp --tmpdir="$sysroot/tmp" pinspawn-script.XXXXXXX)"
 cat > "$tmp_script"
 shell_script_command="$(echo "$shell_command" | sed "s~{0}~$tmp_script~")"
 
