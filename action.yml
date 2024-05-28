@@ -56,7 +56,7 @@ runs:
     - id: run-pinspawn
       shell: bash
       run: |
-        case "${{ inputs.shell }}";
+        case "${{ inputs.shell }}" in
           '')
             device="$(sudo losetup -fP --show "${{ inputs.image }}")"
             if [ sudo systemd-nspawn --image "${device}p2" which bash > /dev/null ]; then
