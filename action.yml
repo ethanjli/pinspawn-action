@@ -33,17 +33,14 @@ runs:
   steps:
     - shell: bash
       run: |
-        is_installed() {
-          apt-cache policy "$1" | grep 'Installed:' | grep -v '(none)' > /dev/null
-        }
         packages=""
-        if [ ! is_installed systemd-container ]; then
+        if [ ! ${{ github.action_path }}/is-installed.sh systemd-container ]; then
           packages="$packages systemd-container"
         fi
-        if [ ! is_installed qemu-user-static ]; then
+        if [ ! ${{ github.action_path }}/is-installed.sh qemu-user-static ]; then
           packages="$packages qemu-user-static"
         fi
-        if [ ! is_installed binfmt-support ]; then
+        if [ ! ${{ github.action_path }}/is-installed.sh binfmt-support ]; then
           packages="$packages binfmt-support"
         fi
         if [ ! -z "$(echo "$packages")" ]; then

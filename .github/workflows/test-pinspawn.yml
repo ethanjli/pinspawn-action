@@ -21,15 +21,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download a base image
-        run: |
-          wget https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz
+      - name: Download and cache base image
+        id: download-base
+        uses: valadaptive/download-file-action@v0.1.0
+        with:
+          url: https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz
+          destination: /tmp/2024-03-15-raspios-bookworm-arm64-lite.img.xz
 
       - name: Grow the image
         id: grow-image
         uses: ethanjli/pigrow-action@v0.1.0
         with:
-          image: 2024-03-15-raspios-bookworm-arm64-lite.img.xz
+          image: /tmp/2024-03-15-raspios-bookworm-arm64-lite.img.xz
           destination: rpi-os-image.img
           mode: to
           size: 8G
