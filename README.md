@@ -65,7 +65,7 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    shell: echo "This variable won't be replaced because there's no shell: $SHELL"
+    shell: echo This variable won't be replaced because there's no shell: $SHELL
 ```
 
 ### Run shell commands with one or more bind mounts from the host OS
