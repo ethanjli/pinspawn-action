@@ -45,7 +45,7 @@ unmount_image() {
   sudo losetup -d "$device"
 }
 
-all_args="$@"
+all_args=("$@")
 image="$1" # e.g. "rpi-os-image.img"
 boot_run_service="$2" # e.g. "/path/to/default-boot-run.service"
 args="${3}" # e.g. "--bind /path/in/host:/path/in/container"
@@ -83,9 +83,12 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_service_instance="$boot_tmp_service@$(systemd-escape "$boot_tmp_result")"
   sudo systemd-nspawn --directory "$sysroot" \
     systemctl enable "$boot_tmp_service_instance"
+  echo "Running container with boot: " \
+    sudo systemd-nspawn --directory "$sysroot" $args
   sudo systemd-nspawn --directory "$sysroot" $args
 else
-  echo "Preparing to run commands without container boot..."
+  echo "Running container without boot: " \
+    sudo systemd-nspawn --directory "$sysroot" $args "${shell_script_command[@]}"
   sudo systemd-nspawn --directory "$sysroot" $args "${shell_script_command[@]}"
 fi
 
