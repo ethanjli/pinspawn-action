@@ -54,6 +54,7 @@ sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
 
 tmp_script="$(sudo mktemp --tmpdir="$sysroot/tmp" pinspawn-script.XXXXXXX)"
+# This command reads & processes stdin:
 sudo tee "$tmp_script" > /dev/null
 shell_script_command="$(echo "$shell_command" | sed "s~{0}~${tmp_script#"$sysroot"}~")"
 
@@ -74,6 +75,9 @@ if [ ! -z "$boot_run_service" ]; then
 else
   args="$args $shell_script_command"
 fi
+
+cat "$tmp_script"
+sudo systemd-nspawn --directory "$sysroot" cat "${tmp_script#"$sysroot"}"
 
 sudo systemd-nspawn --directory "$sysroot" $args
 
