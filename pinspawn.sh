@@ -87,6 +87,8 @@ if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" $args
 else
   echo "Running container without boot..."
+  sudo systemd-nspawn --directory "$sysroot" $args cat "$container_tmp_script"
+  sudo systemd-nspawn --directory "$sysroot" $args su - pi cat "$container_tmp_script"
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args $shell_script_command"
 fi
 

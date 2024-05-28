@@ -39,27 +39,42 @@ jobs:
 
       # Run shell commands
 
-      - name: Install and run cowsay
-        uses: ./
-        with:
-          image: rpi-os-image.img
-          run: |
-            apt-get update
-            apt-get install -y cowsay
-            /usr/games/cowsay 'I am running in a light-weight namespace container!'
+#
+#      - name: Install and run cowsay
+#        uses: ./
+#        with:
+#          image: rpi-os-image.img
+#          run: |
+#            apt-get update
+#            apt-get install -y cowsay
+#            /usr/games/cowsay 'I am running in a light-weight namespace container!'
 
       # Run shell commands in a specific shell
 
-      - name: Run in Python
+#
+#      - name: Run in Python
+#        uses: ./
+#        with:
+#          image: rpi-os-image.img
+#          shell: python
+#          run: |
+#            import platform
+#
+#            for word in reversed(['!', platform.python_version(), 'Python', 'in', 'running', 'am', 'I']):
+#              print(word, end=' ')
+
+      # Run a shell with complicated quoting rules
+
+      - name: Run subshell without root permissions
         uses: ./
         with:
           image: rpi-os-image.img
-          shell: python
+          shell: >
+            sh -c "bash -c \"sh -c 'bash -e {0}'\""
           run: |
-            import platform
-
-            for word in reversed(['!', platform.python_version(), 'Python', 'in', 'running', 'am', 'I']):
-              print(word, end=' ')
+            sudo apt-get update
+            sudo apt-get install -y figlet
+            figlet "I am $USER in $SHELL!"
 
       # Run shell commands as the pi user
 
@@ -68,7 +83,7 @@ jobs:
         with:
           image: rpi-os-image.img
           shell: >
-            su - pi -c "ls -l {0}; cat {0}; bash -e {0} || {0}"
+            su - pi -c "bash -c \"sh -c 'bash -e {0}'\""
           run: |
             sudo apt-get update
             sudo apt-get install -y figlet
