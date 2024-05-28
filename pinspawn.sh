@@ -86,7 +86,9 @@ if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" $args
 else
   echo "Preparing to run commands without container boot..."
-  sudo systemd-nspawn --directory "$sysroot" $args "$shell_script_command"
+  # We need to unwrap $shell_script_command while preserving quotes inside it:
+  command="$(printf "%s " sudo systemd-nspawn --directory "$sysroot" $args $shell_script_command)"
+  $command
 fi
 
 if [ ! -z "$boot_run_service" ]; then
