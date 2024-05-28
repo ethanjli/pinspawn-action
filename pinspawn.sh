@@ -45,16 +45,10 @@ unmount_image() {
   sudo losetup -d "$device"
 }
 
-all_args=("$@")
 image="$1" # e.g. "rpi-os-image.img"
 boot_run_service="$2" # e.g. "/path/to/default-boot-run.service"
-args="${3}" # e.g. "--bind /path/in/host:/path/in/container"
-# We load shell_command as an array to solve word-splitting weirdness:
-shell_command=("${all_args[@]:3}")
-echo "Shell command:"
-for i in "${shell_command[@]}"; do
-  echo "$i"
-done
+args="$3" # e.g. "--bind /path/in/host:/path/in/container"
+shell_command="$4" # e.g. "bash -e {0}"
 
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
@@ -65,11 +59,9 @@ tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
-shell_script_command=("${shell_command[@]/'{0}'/$container_tmp_script}")
-echo "Shell script command:"
-for i in "${shell_script_command[@]}"; do
-  echo "$i"
-done
+shell_script_command="$(\
+  printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
+)"
 
 if [ ! -z "$boot_run_service" ]; then
   echo "Preparing to run commands during container boot..."
@@ -91,11 +83,11 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_service_instance="$boot_tmp_service@$(systemd-escape "$boot_tmp_result")"
   sudo systemd-nspawn --directory "$sysroot" \
     systemctl enable "$boot_tmp_service_instance"
-  echo "Running container with boot: sudo systemd-nspawn --directory \"$sysroot\" $args"
+  echo "Running container with boot..."
   sudo systemd-nspawn --directory "$sysroot" $args
 else
-  echo "Running container without boot: sudo systemd-nspawn --directory \"$sysroot\" $args \"${shell_script_command[@]}\""
-  sudo systemd-nspawn --directory "$sysroot" $args "${shell_script_command[@]}"
+  echo "Running container without boot..."
+  eval "sudo systemd-nspawn --directory \"$sysroot\" $args $shell_script_command"
 fi
 
 if [ ! -z "$boot_run_service" ]; then

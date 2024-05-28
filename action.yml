@@ -106,4 +106,4 @@ runs:
         echo "Running pinspawn.sh \"$INPUT_IMAGE\" \"$boot_run_service\" \"$INPUT_ARGS\" \"$shell_command\"..."
         echo "$INPUT_RUN" | \
           ${{ github.action_path }}/pinspawn.sh \
-          "$INPUT_IMAGE" "$boot_run_service" "$INPUT_ARGS" $shell_command
+          "$INPUT_IMAGE" "$boot_run_service" "$INPUT_ARGS" "$shell_command"
