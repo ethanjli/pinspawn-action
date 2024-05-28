@@ -48,7 +48,7 @@ unmount_image() {
 image="$1" # e.g. "rpi-os-image.img"
 boot_run_service="$2" # e.g. "/path/to/default-boot-run.service"
 args="${3:-}" # e.g. "--bind /path/in/host:/path/in/container"
-shell_command="${4:-}" # e.g. "su - pi bash -e {0}"
+shell_command="${4:-}" # e.g. "bash -e {0}"
 
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
@@ -82,11 +82,12 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_service_instance="$boot_tmp_service@$(systemd-escape "$boot_tmp_result")"
   sudo systemd-nspawn --directory "$sysroot" \
     systemctl enable "$boot_tmp_service_instance"
-  sudo systemd-nspawn --directory "$sysroot" $args
 else
   echo "Preparing to run commands without container boot..."
-  sudo systemd-nspawn --directory "$sysroot" $args $shell_script_command
+  args="$args $shell_script_command"
 fi
+
+sudo systemd-nspawn --directory "$sysroot" $args
 
 if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" \
