@@ -51,7 +51,7 @@ boot_run_service="$2" # e.g. "/path/to/default-boot-run.service"
 args="${3}" # e.g. "--bind /path/in/host:/path/in/container"
 # We load shell_command as an array to solve word-splitting weirdness:
 shell_command=("${all_args[@]:3}")
-echo "Shell command: ${shell_command[@]}"
+echo "Shell command:" "${shell_command[@]}"
 
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
@@ -63,6 +63,7 @@ sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
 shell_script_command=("${shell_command[@]/'{0}'/$container_tmp_script}")
+echo "Shell script command:" "${shell_script_command[@]}"
 
 if [ ! -z "$boot_run_service" ]; then
   echo "Preparing to run commands during container boot..."
@@ -84,12 +85,10 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_service_instance="$boot_tmp_service@$(systemd-escape "$boot_tmp_result")"
   sudo systemd-nspawn --directory "$sysroot" \
     systemctl enable "$boot_tmp_service_instance"
-  echo "Running container with boot: " \
-    sudo systemd-nspawn --directory "$sysroot" $args
+  echo "Running container with boot: sudo systemd-nspawn --directory \"$sysroot\" $args"
   sudo systemd-nspawn --directory "$sysroot" $args
 else
-  echo "Running container without boot: " \
-    sudo systemd-nspawn --directory "$sysroot" $args "${shell_script_command[@]}"
+  echo "Running container without boot: sudo systemd-nspawn --directory \"$sysroot\" $args \"${shell_script_command[@]}\""
   sudo systemd-nspawn --directory "$sysroot" $args "${shell_script_command[@]}"
 fi
 
