@@ -65,6 +65,10 @@ sudo systemd-nspawn --directory "$sysroot" \
 shell_script_command="$(\
   printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
 )"
+if [ -z "$shell_script_command ]; then
+  # shell_command didn't have {0}, so we'll just use it verbatim:
+  shell_script_command="$shell_command"
+fi
 
 if [ ! -z "$user" ]; then
   args="--user $user $args"
@@ -84,6 +88,10 @@ if [ ! -z "$boot_run_service" ]; then
   )"
   sudo cp "$boot_run_service" "$boot_tmp_service"
   sudo awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)' "$boot_tmp_service"
+  if [ ! -s "$boot_tmp_service" ]; then
+    # boot_run_service didn't have {0}, so we'll just use it verbatim:
+    sudo cp "$boot_run_service" "$boot_tmp_service"
+  fi
   cat "$boot_tmp_service"
 
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
