@@ -1,0 +1,95 @@
+name: "Run PiNspawn"
+author: ethanjli
+description: Uses `systemd-nspawn` to run commands in a namespace container attached to a Raspberry Pi SD card image.
+branding:
+  icon: external-link
+  color: red
+
+inputs:
+  image:
+    description: Path of the image for the container
+    required: true
+  args:
+    description: Options, args, and/or a command to pass to `systemd-nspawn`
+    required: false
+  shell:
+    description: The shell to use for running commands.
+    required: false
+  run:
+    description: Commands to run in the shell.
+    required: false
+  boot:
+    description: Boot the image's init program as PID 1.
+    required: false
+    default: false
+  run-service:
+    description:
+      The systemd service to use for running `shell` with the `run` commands if the image's init
+      program is booted.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        is_installed() {
+          apt-cache policy "$1" | grep 'Installed:' | grep -v '(none)' > /dev/null
+        }
+        packages=""
+        if [ ! is_installed systemd-container ]; then
+          packages="$packages systemd-container"
+        fi
+        if [ ! is_installed qemu-user-static ]; then
+          packages="$packages qemu-user-static"
+        fi
+        if [ ! is_installed binfmt-support ]; then
+          packages="$packages binfmt-support"
+        fi
+        if [ ! -z "$(echo "$packages")" ]; then
+          echo "Installing dependencies to run systemd-nspawn on non-amd64 images..."
+          sudo apt-get update
+          sudo apt-get install $packages
+        fi
+
+    - id: run-pinspawn
+      shell: bash
+      run: |
+        case "${{ inputs.shell }}";
+          '')
+            device="$(sudo losetup -fP --show "${{ inputs.image }}")"
+            if [ sudo systemd-nspawn --image "${device}p2" which bash > /dev/null ]; then
+              shell_command='bash -e {0}'
+            else
+              echo "Warning: Falling back to sh because bash wasn't found!"
+              shell_command='sh -e {0}'
+            fi
+            sudo losetup -d "$device"
+            ;;
+          'bash')
+            device="$(sudo losetup -fP --show "${{ inputs.image }}")"
+            if [ sudo systemd-nspawn --image "${device}p2" which bash > /dev/null ]; then
+              shell_command='bash --noprofile --norc -eo pipefail {0}'
+            else
+              echo "Warning: Falling back to sh because bash wasn't found!"
+              shell_command='sh -e {0}'
+            fi
+            sudo losetup -d "$device"
+            ;;
+          'python')
+            shell_command='python {0}'
+            ;;
+          'sh')
+            shell_command='sh -e {0}'
+            ;;
+          *)
+            shell_command='${{ inputs.shell }}'
+            ;;
+        esac
+
+        cat "${{ inputs.run }}" | \
+          ${{ github.action_path }}/pinspawn.sh \
+            "${{ inputs.image }}" \
+            "${{ inputs.boot && (inputs.run-service || format('{0}/{1}', github.action_path, 'default-boot-run.service')) || '' }}" \
+            "${{ inputs.args }}" \
+            "$shell_command"

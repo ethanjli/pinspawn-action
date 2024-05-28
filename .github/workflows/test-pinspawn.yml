@@ -1,0 +1,118 @@
+name: build-os
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**/README.md'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/README.md'
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Test containers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download a base image
+        run: |
+          wget https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz
+
+      - name: Grow the image
+        id: grow-image
+        uses: ethanjli/pigrow@v0.1.0
+        with:
+          image: 2024-03-15-raspios-bookworm-arm64-lite.img.xz
+          destination: rpi-os-image.img
+          mode: to
+          size: 8G
+
+      - name: Install and run cowsay
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          run: |
+            echo $SHELL
+            apt-get update
+            apt-get install -y cowsay
+            /usr/games/cowsay 'I am running in a light-weight namespace container!'
+
+      - name: Run Python
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          shell: python
+          run: |
+            echo $SHELL
+            apt-get update
+            apt-get install -y cowsay
+            /usr/games/cowsay 'I am running in a light-weight namespace container!'
+
+      - name: Run unprivileged shell commands
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          shell: su - pi bash -e {0}
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y figlet
+            figlet "I am $USER!"
+
+      - name: Check os-release
+        uses: ethanjli/pinspawn-action@v0.1.0
+        with:
+          image: rpi-os-image.img
+          shell: cat /usr/lib/os-release
+
+      - name: Make a bootloader configuration snippet
+        uses: 1arp/create-a-file-action@0.4.5
+        with:
+          file: boot-config.snippet
+          content: |
+            # Enable support for the RV3028 RTC
+            dtoverlay=i2c-rtc,rv3028,trickle-resistor-ohms=3000,backup-switchover-mode=1
+
+      - name: Modify bootloader configuration
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          args: --bind ./:/run/external
+          run: |
+            cat /run/external/boot-config.snippet >> /boot/config.txt
+            cp /boot/config.txt /run/external/boot.config
+
+      - name: Print the bootloader config
+        run: cat boot.config
+
+      - name: Analyze systemd boot process
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          args: --bind ./:/run/external
+          boot: true
+          run: |
+            systemd-analyze blame
+            systemd-analyze plot > /run/external/bootup-timeline.svg
+
+      - name: Upload the bootup timeline to Job Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootup-timeline
+          path: bootup-timeline.svg
+          if-no-files-found: error
+          overwrite: true
+
+      - name: Fail during boot
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          boot: true
+          run: |
+            exit 42
