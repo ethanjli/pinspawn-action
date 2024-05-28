@@ -59,9 +59,9 @@ tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 # Note: this command reads & processes stdin:
 sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
-sudo systemd-nspawn --directory "$sysroot" \
-  chown "$user" "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
+sudo systemd-nspawn --directory "$sysroot" \
+  chown "$user" "$container_tmp_script"
 shell_script_command="$(\
   printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
 )"
@@ -77,13 +77,13 @@ if [ ! -z "$boot_run_service" ]; then
   sudo cp "$tmp_script" "$boot_tmp_script"
   sudo chmod a+x "$boot_tmp_script"
   sudo systemd-nspawn --directory "$sysroot" \
-    chown "$user" "$boot_tmp_script"
+    chown "$user" "${boot_tmp_script#"$sysroot"}"
 
   boot_tmp_service="$(\
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn-XXXXXXX \
   )"
   sudo cp "$boot_run_service" "$boot_tmp_service"
-  sudo awk -v r="${shell_script_command[@]}" -e 'gsub(/{0}/, r)' "$boot_tmp_service"
+  sudo awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)' "$boot_tmp_service"
   cat "$boot_tmp_service"
 
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
