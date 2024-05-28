@@ -1,7 +1,6 @@
 #!/bin/bash -eux
 
 mount_image() {
-  # Note: this function must be run as root.
   local image
   image="$1"
   local sysroot
@@ -18,15 +17,14 @@ mount_image() {
 
   echo "Mounting $device..." 1>&2
   mkdir -p "$sysroot"
-  mount "${device}p2" "$sysroot"
-  mount "${device}p1" "$sysroot/boot"
+  sudo mount "${device}p2" "$sysroot" 1>&2
+  sudo mount "${device}p1" "$sysroot/boot" 1>&2
   echo "Mounted to $sysroot!" 1>&2
 
   echo $device
 }
 
 unmount_image() {
-  # Note: this function must be run as root.
   local device
   device="$1"
   local sysroot
@@ -34,13 +32,13 @@ unmount_image() {
 
   if [ ! -z "$sysroot" ]; then
     echo "Unmounting $sysroot..." 1>&2
-    umount "$sysroot/boot"
-    umount "$sysroot"
+    sudo umount "$sysroot/boot"
+    sudo umount "$sysroot"
   fi
 
   echo "Unmounting $device..." 1>&2
-  e2fsck -p -f "${device}p2"
-  losetup -d "$device"
+  sudo e2fsck -p -f "${device}p2"
+  sudo losetup -d "$device"
 }
 
 image="$1" # e.g. "rpi-os-image.img"
@@ -49,7 +47,7 @@ args="${3:-}" # e.g. "--bind /path/in/host:/path/in/container"
 shell_command="${4:-}" # e.g. "su - pi bash -e {0}"
 
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
-device="$(sudo mount_image "$image" "$sysroot")"
+device="$(mount_image "$image" "$sysroot")"
 
 tmp_script="$(sudo mktemp --tmpdir="$sysroot/tmp" pinspawn-script.XXXXXXX)"
 cat > "$tmp_script"
@@ -102,4 +100,4 @@ fi
 
 sudo rm -f "$tmp_script"
 
-sudo unmount_image "$device" "$sysroot"
+unmount_image "$device" "$sysroot"
