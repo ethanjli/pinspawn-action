@@ -45,10 +45,12 @@ unmount_image() {
   sudo losetup -d "$device"
 }
 
+all_args="$@"
 image="$1" # e.g. "rpi-os-image.img"
 boot_run_service="$2" # e.g. "/path/to/default-boot-run.service"
-args="${3:-}" # e.g. "--bind /path/in/host:/path/in/container"
-shell_command="${4:-}" # e.g. "bash -e {0}"
+args="${3}" # e.g. "--bind /path/in/host:/path/in/container"
+# We load shell_command as an array to solve word-splitting weirdness:
+shell_command=("${all_args[@]:3}")
 
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
@@ -59,9 +61,7 @@ tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
-shell_script_command="$(\
-  printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
-)"
+shell_script_command=("${shell_command[@]/'{0}'/$container_tmp_script}")
 
 if [ ! -z "$boot_run_service" ]; then
   echo "Preparing to run commands during container boot..."
@@ -75,7 +75,7 @@ if [ ! -z "$boot_run_service" ]; then
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn-XXXXXXX \
   )"
   sudo cp "$boot_run_service" "$boot_tmp_service"
-  sudo awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)' "$boot_tmp_service"
+  sudo awk -v r="${shell_script_command[@]}" -e 'gsub(/{0}/, r)' "$boot_tmp_service"
   cat "$boot_tmp_service"
 
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
@@ -86,8 +86,7 @@ if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" $args
 else
   echo "Preparing to run commands without container boot..."
-  # We need to unwrap $shell_script_command while preserving quotes inside it:
-  eval "$(echo sudo systemd-nspawn --directory "$sysroot" $args $shell_script_command)"
+  sudo systemd-nspawn --directory "$sysroot" $args "${shell_script_command[@]}"
 fi
 
 if [ ! -z "$boot_run_service" ]; then
