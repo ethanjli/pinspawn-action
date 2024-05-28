@@ -54,7 +54,7 @@ sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
 
 tmp_script="$(sudo mktemp --tmpdir="$sysroot/tmp" pinspawn-script.XXXXXXX)"
-cat > "$tmp_script"
+sudo tee "$tmp_script" > /dev/null
 shell_script_command="$(echo "$shell_command" | sed "s~{0}~$tmp_script~")"
 
 if [ ! -z "$boot_run_service" ]; then
