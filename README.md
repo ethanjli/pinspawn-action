@@ -70,7 +70,7 @@ GitHub action.
       #!/usr/bin/env -S bash -eux
       figlet -f digital "I am $USER in $SHELL!"
 
-- name: Print shell
+- name: Run script directly
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
@@ -114,7 +114,7 @@ Note: the system will shut down after the specified commands finish running.
   with:
     image: rpi-os-image.img
     args: |
-      --bind ./:/run/external
+      --bind "$(pwd)":/run/external
     boot: true
     run: |
       systemd-analyze blame
