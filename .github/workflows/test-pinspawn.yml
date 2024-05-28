@@ -99,7 +99,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          args: --bind "$(pwd)"/figlet.sh:/run/external
+          args: --bind "$(pwd)":/run/external
           user: pi
           shell: /run/external/figlet.sh
 

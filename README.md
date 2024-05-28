@@ -74,7 +74,7 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    args: --bind "$(pwd)"/figlet.sh:/run/external/figlet.sh
+    args: --bind "$(pwd)":/run/external
     user: pi
     shell: /run/external/figlet.sh
 
