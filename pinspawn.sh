@@ -65,7 +65,7 @@ sudo systemd-nspawn --directory "$sysroot" \
 shell_script_command="$(\
   printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
 )"
-if [ -z "$shell_script_command ]; then
+if [ -z "$shell_script_command" ]; then
   # shell_command didn't have {0}, so we'll just use it verbatim:
   shell_script_command="$shell_command"
 fi
