@@ -53,12 +53,14 @@ shell_command="${4:-}" # e.g. "su - pi bash -e {0}"
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
 
-tmp_script="$(sudo mktemp --tmpdir="$sysroot/tmp" pinspawn-script.XXXXXXX)"
-# This command reads & processes stdin:
+# Note: we can't use `/tmp` because it will be remounted by the container
+tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
+# Note: this command reads & processes stdin:
 sudo tee "$tmp_script" > /dev/null
 shell_script_command="$(echo "$shell_command" | sed "s~{0}~${tmp_script#"$sysroot"}~")"
 
 if [ ! -z "$boot_run_service" ]; then
+  echo "Preparing to run commands during container boot..."
   args="--boot $args"
 
   boot_tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
@@ -73,11 +75,9 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_service_instance="$boot_tmp_service@$(systemd-escape "$boot_tmp_result")"
   sudo systemd-nspawn --directory "$sysroot" systemctl enable "$boot_tmp_service_instance"
 else
+  echo "Preparing to run commands without container boot..."
   args="$args $shell_script_command"
 fi
-
-sudo cat "$tmp_script"
-sudo systemd-nspawn --directory "$sysroot" cat "${tmp_script#"$sysroot"}"
 
 sudo systemd-nspawn --directory "$sysroot" $args
 
