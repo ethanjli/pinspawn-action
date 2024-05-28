@@ -68,7 +68,7 @@ jobs:
         with:
           image: rpi-os-image.img
           shell: >
-            su - pi -c "bash -e {0}"
+            su - pi -c "ls -l {0}; cat {0}; bash -e {0} || {0}"
           run: |
             sudo apt-get update
             sudo apt-get install -y figlet
