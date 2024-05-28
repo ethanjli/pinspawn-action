@@ -39,29 +39,29 @@ jobs:
 
       # Run shell commands
 
-#
-#      - name: Install and run cowsay
-#        uses: ./
-#        with:
-#          image: rpi-os-image.img
-#          run: |
-#            apt-get update
-#            apt-get install -y cowsay
-#            /usr/games/cowsay 'I am running in a light-weight namespace container!'
+
+      - name: Install and run cowsay
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          run: |
+            apt-get update
+            apt-get install -y cowsay
+            /usr/games/cowsay 'I am running in a light-weight namespace container!'
 
       # Run shell commands in a specific shell
 
-#
-#      - name: Run in Python
-#        uses: ./
-#        with:
-#          image: rpi-os-image.img
-#          shell: python
-#          run: |
-#            import platform
-#
-#            for word in reversed(['!', platform.python_version(), 'Python', 'in', 'running', 'am', 'I']):
-#              print(word, end=' ')
+
+      - name: Run in Python
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          shell: python
+          run: |
+            import platform
+
+            for word in reversed(['!', platform.python_version(), 'Python', 'in', 'running', 'am', 'I']):
+              print(word, end=' ')
 
       # Run a shell with complicated quoting rules
 
@@ -70,35 +70,32 @@ jobs:
         with:
           image: rpi-os-image.img
           shell: >
-            sh -c "bash -c \"sh -c 'bash -e {0}'\""
+            sh -c "bash -c \"bash -c 'sh -c {0}'\""
           run: |
-            sudo apt-get update
-            sudo apt-get install -y figlet
-            figlet "I am $USER in $SHELL!"
+            /usr/games/cowsay "I am $USER in $SHELL!"
 
       # Run shell commands as the pi user
-
-      - name: Run subshell without root permissions
-        uses: ./
-        with:
-          image: rpi-os-image.img
-          shell: >
-            sudo -u pi -c "bash -e {0}"
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y figlet
-            figlet "I am $USER in $SHELL!"
 
       - name: Run script without root permissions
         uses: ./
         with:
           image: rpi-os-image.img
-          shell: sudo -u pi {0}
+          user: pi
           run: |
-            #!/usr/bin/env -S bash -e
             sudo apt-get update
             sudo apt-get install -y figlet
-            figlet "I am $USER in $SHELL!"
+            figlet -f bubble "I am $USER in $SHELL!"
+
+      # Run a script directly, without any subshell
+
+      - name: Run script directly
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          shell: {0}
+          run: |
+            #!/usr/bin/env -S bash -eux
+            figlet -f digital "I am $USER in $SHELL!"
 
       # Run a specific command without a shell
 

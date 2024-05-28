@@ -51,13 +51,24 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    shell: >
-        su - pi -c "bash -e {0}"
+    user: pi
     run: |
-      #!/usr/bin/bash -eux
       sudo apt-get update
       sudo apt-get install -y figlet
-      figlet "I am $USER in $SHELL!"
+      figlet -f digital "I am $USER in $SHELL!"
+```
+
+### Run a script directly, without any subshell
+
+```yaml
+- name: Run script directly, without any subshell
+  uses: ./
+  with:
+    image: rpi-os-image.img
+    shell: {0}
+    run: |
+      #!/usr/bin/env -S bash -eux
+      figlet -f digital "I am $USER in $SHELL!"
 ```
 
 ### Run a specific command without a shell
@@ -131,6 +142,7 @@ Inputs:
 | `args`        | `systemd-nspawn` options/args | no (default ``)      | Options, args, and/or a command to pass to `systemd-nspawn`. |
 | `shell`       | ``, `bash`, `sh`, `python`    | no (default ``)      | The shell to use for running commands.                       |
 | `run`         | shell commands                | no (default ``)      | Commands to run in the shell.                                |
+| `user`        | name of user in image         | no (default `root`)  | The user to run commands as.                                 |
 | `boot`        | `false`, `true`               | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.    |
 | `run-service` | file path                     | no (default ``)      | systemd service to run `shell` with the `run` commands.      |
 
@@ -140,6 +152,8 @@ Inputs:
 
 - `args` can be a list of command-line options/arguments for
   [`systemd-nspawn`](https://www.freedesktop.org/software/systemd/man/latest/systemd-nspawn.html).
+  You should not set the `--user` or `--boot` flags here; instead, you should set the `user` and
+  `boot` action inputs.
 
 - If `run` is not left empty, `shell` will be used to execute commands specified in the `run` input.
   You can use built-in `shell` keywords, or you can define a custom set of shell options. The shell
@@ -149,7 +163,8 @@ Inputs:
   about the behavior of this action's `shell` input.
 
   If you want to run a single custom command without a shell, you should leave `run` empty and
-  provide a custom command as the `shell` input.
+  provide a custom command as the `shell` input. However, you may need to run the command as the
+  `root` user.
 
 - If `boot` is enabled, this action will use `systemd-nspawn` to automatically search for an init
   program in the image (typically systemd) and invoke it as PID 1, instead of a shell.

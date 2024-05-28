@@ -46,9 +46,10 @@ unmount_image() {
 }
 
 image="$1" # e.g. "rpi-os-image.img"
-boot_run_service="$2" # e.g. "/path/to/default-boot-run.service"
-args="$3" # e.g. "--bind /path/in/host:/path/in/container"
-shell_command="$4" # e.g. "bash -e {0}"
+user="$2" # e.g. "pi"
+boot_run_service="$3" # e.g. "/path/to/default-boot-run.service"
+args="$4" # e.g. "--bind /path/in/host:/path/in/container"
+shell_command="$5" # e.g. "bash -e {0}"
 
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
@@ -58,12 +59,15 @@ tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 # Note: this command reads & processes stdin:
 sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
-sudo chown $USER "$tmp_script"
+sudo chown "$user" "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
 shell_script_command="$(\
   printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
 )"
 
+if [ ! -z "$user" ]; then
+  args="--user $user $args"
+fi
 if [ ! -z "$boot_run_service" ]; then
   echo "Preparing to run commands during container boot..."
   args="--boot $args"
@@ -71,6 +75,7 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
   sudo cp "$tmp_script" "$boot_tmp_script"
   sudo chmod a+x "$boot_tmp_script"
+  sudo chown "$user" "$boot_tmp_script"
 
   boot_tmp_service="$(\
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn-XXXXXXX \
@@ -88,11 +93,6 @@ if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" $args
 else
   echo "Running container without boot..."
-  sudo systemd-nspawn --directory "$sysroot" $args ls -l "$container_tmp_script"
-  sudo systemd-nspawn --directory "$sysroot" $args chown pi "$container_tmp_script"
-  sudo systemd-nspawn --directory "$sysroot" $args ls -l "$container_tmp_script"
-  sudo systemd-nspawn --directory "$sysroot" $args --user pi "$container_tmp_script"
-  sudo systemd-nspawn --directory "$sysroot" $args sudo -u pi "$container_tmp_script"
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args $shell_script_command"
 fi
 
