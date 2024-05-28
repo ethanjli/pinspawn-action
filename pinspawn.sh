@@ -76,7 +76,7 @@ else
   args="$args $shell_script_command"
 fi
 
-cat "$tmp_script"
+sudo cat "$tmp_script"
 sudo systemd-nspawn --directory "$sysroot" cat "${tmp_script#"$sysroot"}"
 
 sudo systemd-nspawn --directory "$sysroot" $args
