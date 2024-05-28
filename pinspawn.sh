@@ -61,7 +61,7 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
   sudo cp "$tmp_script" "$boot_tmp_script"
 
-  boot_tmp_service="$(sudo mktemp --tmpdir="$sysroot/etc/systemd/system" pinspawn-XXXXXXX@.service)"
+  boot_tmp_service="$(sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn-XXXXXXX)"
   sudo cp "$boot_run_service" "$boot_tmp_service"
   sudo awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)' $boot_tmp_service
 

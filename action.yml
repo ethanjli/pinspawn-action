@@ -101,6 +101,6 @@ runs:
         cat << "$heredoc_delimiter" > "$run_commands"
         ${{ inputs.run }}
         "$heredoc_delimiter"
-        ${{ github.action_path }}/pinspawn.sh \
+        bash -x ${{ github.action_path }}/pinspawn.sh \
           "${{ inputs.image }}" "$boot_run_service" "${{ inputs.args }}" "$shell_command" \
           < "$run_commands"
