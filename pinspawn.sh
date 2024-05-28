@@ -51,6 +51,7 @@ boot_run_service="$2" # e.g. "/path/to/default-boot-run.service"
 args="${3}" # e.g. "--bind /path/in/host:/path/in/container"
 # We load shell_command as an array to solve word-splitting weirdness:
 shell_command=("${all_args[@]:3}")
+echo "Shell command: ${shell_command[@]}"
 
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
