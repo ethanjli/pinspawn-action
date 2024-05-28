@@ -83,7 +83,7 @@ jobs:
         with:
           image: rpi-os-image.img
           shell: >
-            su - pi -c "bash -c \"sh -c 'bash -e {0}'\""
+            sudo -u pi -c "bash -c \"sh -c 'bash -e {0}'\""
           run: |
             sudo apt-get update
             sudo apt-get install -y figlet
@@ -93,9 +93,9 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          shell: su - pi {0}
+          shell: sudo -u pi {0}
           run: |
-            #!/usr/bin/sh -e
+            #!/usr/bin/env -S bash -e
             sudo apt-get update
             sudo apt-get install -y figlet
             figlet "I am $USER in $SHELL!"
