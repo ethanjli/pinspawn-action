@@ -2,6 +2,18 @@
 
 GitHub action to use `systemd-nspawn` to run commands in a namespace container attached to a Raspberry Pi SD card image
 
+[`systemd-nspawn`](https://www.freedesktop.org/software/systemd/man/latest/systemd-nspawn.html) is
+used to run commands in a light-weight namespace container, like chroot but with full virtualization
+of the file system hierarchy, the process tree, the various IPC subsystems, and the host and domain
+name. It can also be used to boot the image's init program (which is usually systemd) as an OS; this
+action makes it easy to run a set of shell commands whether or not the OS is booted in the
+container.
+
+Note that you cannot start or interact with the Docker daemon inside a container booted with
+`systemd-nspawn`; instead, you should perform those operations inside a booted QEMU VM attached to
+your image, e.g. using the [`ethanjli/piqemu-action`](https://github.com/ethanjli/piqemu-action)
+GitHub action.
+
 ## Basic Usage Examples
 
 ### Run shell commands
