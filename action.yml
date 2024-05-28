@@ -47,14 +47,14 @@ runs:
         if ! is_installed binfmt-support; then
           packages="$packages binfmt-support"
         fi
-        if ! -z "$(echo "$packages")"; then
+        if [ ! -z "$(echo "$packages")" ]; then
           echo "Installing dependencies to run systemd-nspawn on non-amd64 images..."
           sudo apt-get update
           sudo apt-get install $packages
         fi
 
     - id: run-pinspawn
-      shell: bash -eux "{0}"
+      shell: bash
       run: |
         case "${{ inputs.shell }}" in
           '')
@@ -96,7 +96,7 @@ runs:
           fi
         fi
 
-        run_commands="$(sudo mktemp --tmpdir /tmp pinspawn-run-script.XXXXXXX)"
+        run_commands="$(sudo mktemp --tmpdir=/tmp pinspawn-run-script.XXXXXXX)"
         heredoc_delimiter="$(mktemp -u PINSPAWN-RUN-EOF-XXXXXXX)"
         cat << "$heredoc_delimiter" > "$run_commands"
         ${{ inputs.run }}
