@@ -67,7 +67,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          shell: su - pi {0}
+          shell: su - pi -c {0}
           run: |
             #!/usr/bin/env -S bash -eux
             sudo apt-get update

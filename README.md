@@ -51,9 +51,9 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    shell: su - pi {0}
+    shell: su - pi -c {0}
     run: |
-      #!/usr/bin/env -S bash -eux
+      #!/usr/bin/bash -eux
       sudo apt-get update
       sudo apt-get install -y figlet
       figlet "I am $USER!"
@@ -164,7 +164,8 @@ Inputs:
     [Service]
     type=oneshot
     ExecStartPre=echo "Running OS setup..."
-    ExecStart=bash -c '{0}; echo "$?" > %I; shutdown now'
+    ExecStart=bash -c '{0}; echo "$?" > %I'
+    ExecStart=shutdown now
     StandardOutput=tty
 
     [Install]
