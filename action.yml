@@ -54,11 +54,18 @@ runs:
         fi
 
     - id: run-pinspawn
-      shell: bash -eux {0}
+      shell: bash
+      env:
+        INPUT_IMAGE: ${{ inputs.image }}
+        INPUT_ARGS: ${{ inputs.args }}
+        INPUT_SHELL: ${{ inputs.shell }}
+        INPUT_RUN: ${{ inputs.run }}
+        INPUT_BOOT: ${{ inputs.boot }}
+        INPUT_RUN_SERVICE: ${{ inputs.run-service }}
       run: |
-        case "${{ inputs.shell }}" in
+        case "$INPUT_SHELL" in
           '')
-            device="$(sudo losetup -fP --show "${{ inputs.image }}")"
+            device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
             if sudo systemd-nspawn --image "${device}p2" which bash > /dev/null; then
               shell_command='bash -e {0}'
             else
@@ -68,7 +75,7 @@ runs:
             sudo losetup -d "$device"
             ;;
           'bash')
-            device="$(sudo losetup -fP --show "${{ inputs.image }}")"
+            device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
             if sudo systemd-nspawn --image "${device}p2" which bash > /dev/null; then
               shell_command='bash --noprofile --norc -eo pipefail {0}'
             else
@@ -84,21 +91,19 @@ runs:
             shell_command='sh -e {0}'
             ;;
           *)
-            shell_command='${{ inputs.shell }}'
+            shell_command="$INPUT_SHELL"
             ;;
         esac
 
         boot_run_service=""
-        if [ "${{ inputs.boot }}" == "true" ]; then
+        if [ "$INPUT_BOOT" == "true" ]; then
           boot_run_service="${{ github.action_path }}/default-boot-run.service"
-          if [ ! -z "${{ inputs.run-service }}" ]; then
-            boot_run_service="${{ inputs.run-service }}"
+          if [ ! -z "$INPUT_RUN_SERVICE" ]; then
+            boot_run_service="$INPUT_RUN_SERVICE"
           fi
         fi
 
-        run_commands="$(sudo mktemp --tmpdir=/tmp pinspawn-run-script.XXXXXXX)"
-        ${{ github.action_path }}/pinspawn.sh \
-          "${{ inputs.image }}" "$boot_run_service" "${{ inputs.args }}" "$shell_command" \
-        <<
-        ${{ inputs.run }}
-
+        echo "Running pinspawn.sh \"$INPUT_IMAGE\" \"$boot_run_service\" \"$INPUT_ARGS\" \"$shell_command\"..."
+        echo "$INPUT_RUN" | \
+          ${{ github.action_path }}/pinspawn.sh \
+          "$INPUT_IMAGE" "$boot_run_service" "$INPUT_ARGS" "$shell_command"
