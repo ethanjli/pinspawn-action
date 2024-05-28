@@ -49,6 +49,9 @@ shell_command="${4:-}" # e.g. "su - pi bash -e {0}"
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
 
+ls "$sysroot"
+ls "$sysroot/usr"
+
 tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 cat > "$tmp_script"
 shell_script_command="$(echo "$shell_command" | sed "s~{0}~$tmp_script~")"
