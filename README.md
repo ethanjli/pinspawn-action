@@ -65,7 +65,7 @@ GitHub action.
   uses: ./
   with:
     image: rpi-os-image.img
-    shell: {0}
+    shell: '{0}'
     run: |
       #!/usr/bin/env -S bash -eux
       figlet -f digital "I am $USER in $SHELL!"
