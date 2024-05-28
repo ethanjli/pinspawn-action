@@ -60,7 +60,7 @@ sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
 shell_script_command="$(\
-  printf "%q" "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
+  printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
 )"
 
 if [ ! -z "$boot_run_service" ]; then
