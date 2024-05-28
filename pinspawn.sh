@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -eux
 
 mount_image() {
   # Note: this function must be run as root.

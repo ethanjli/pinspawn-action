@@ -54,7 +54,7 @@ runs:
         fi
 
     - id: run-pinspawn
-      shell: bash
+      shell: bash -eux "{0}"
       run: |
         case "${{ inputs.shell }}" in
           '')
@@ -101,6 +101,6 @@ runs:
         cat << "$heredoc_delimiter" > "$run_commands"
         ${{ inputs.run }}
         "$heredoc_delimiter"
-        bash -x ${{ github.action_path }}/pinspawn.sh \
+        ${{ github.action_path }}/pinspawn.sh \
           "${{ inputs.image }}" "$boot_run_service" "${{ inputs.args }}" "$shell_command" \
           < "$run_commands"
