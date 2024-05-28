@@ -86,7 +86,7 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_service="$(\
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn-XXXXXXX \
   )"
-  sudo awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)' "$boot_run_service" | |
+  sudo awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)' "$boot_run_service" | \
     sudo tee "$boot_tmp_service" > /dev/null
   if [ ! -s "$boot_tmp_service" ]; then
     # boot_run_service didn't have {0}, so we'll just use it verbatim:
