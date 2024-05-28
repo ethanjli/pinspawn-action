@@ -58,7 +58,15 @@ tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 # Note: this command reads & processes stdin:
 sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
-shell_script_command="$(echo "$shell_command" | sed "s~{0}~${tmp_script#"$sysroot"}~")"
+ls -l "$tmp_script"
+container_tmp_script="${tmp_script#"$sysroot"}"
+sudo systemd-nspawn --directory "$sysroot" \
+  sudo ls -l "$container_tmp_script"
+sudo systemd-nspawn --directory "$sysroot" \
+  sudo chmod a+x "$container_tmp_script"
+sudo systemd-nspawn --directory "$sysroot" \
+  sudo ls -l "$container_tmp_script"
+shell_script_command="$(echo "$shell_command" | sed "s~{0}~$container_tmp_script~")"
 
 if [ ! -z "$boot_run_service" ]; then
   echo "Preparing to run commands during container boot..."
@@ -75,7 +83,8 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
 
   boot_tmp_service_instance="$boot_tmp_service@$(systemd-escape "$boot_tmp_result")"
-  sudo systemd-nspawn --directory "$sysroot" systemctl enable "$boot_tmp_service_instance"
+  sudo systemd-nspawn --directory "$sysroot" \
+    systemctl enable "$boot_tmp_service_instance"
 else
   echo "Preparing to run commands without container boot..."
   args="$args $shell_script_command"
@@ -84,7 +93,8 @@ fi
 sudo systemd-nspawn --directory "$sysroot" $args
 
 if [ ! -z "$boot_run_service" ]; then
-  sudo systemd-nspawn --directory "$sysroot" systemctl disable "$boot_tmp_service_instance"
+  sudo systemd-nspawn --directory "$sysroot" \
+    systemctl disable "$boot_tmp_service_instance"
 
   if [ ! -f "$boot_tmp_result" ]; then
     echo "Error: $boot_run_service_instance did not store a result indicating success/failure!"
