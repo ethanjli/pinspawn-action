@@ -70,6 +70,9 @@ GitHub action.
       #!/usr/bin/env -S bash -eux
       figlet -f digital "I am $USER in $SHELL!"
 
+- name: Make the script executable
+  run: chmod a+x figlet.sh
+
 - name: Run script directly
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
