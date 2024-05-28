@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 mount_image() {
   local image
@@ -92,7 +92,8 @@ if [ ! -z "$boot_run_service" ]; then
     # boot_run_service didn't have {0}, so we'll just use it verbatim:
     sudo cp "$boot_run_service" "$boot_tmp_service"
   fi
-  cat "$boot_tmp_service"
+  echo "Boot run service $boot_tmp_service:"
+  sudo cat "$boot_tmp_service"
 
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
 
