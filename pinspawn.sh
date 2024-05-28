@@ -51,7 +51,10 @@ boot_run_service="$2" # e.g. "/path/to/default-boot-run.service"
 args="${3}" # e.g. "--bind /path/in/host:/path/in/container"
 # We load shell_command as an array to solve word-splitting weirdness:
 shell_command=("${all_args[@]:3}")
-echo "Shell command:" "${shell_command[@]}"
+echo "Shell command:"
+for i in "${shell_command[@]}"; do
+  echo "$i"
+done
 
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
@@ -63,7 +66,10 @@ sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
 shell_script_command=("${shell_command[@]/'{0}'/$container_tmp_script}")
-echo "Shell script command:" "${shell_script_command[@]}"
+echo "Shell script command:"
+for i in "${shell_script_command[@]}"; do
+  echo "$i"
+done
 
 if [ ! -z "$boot_run_service" ]; then
   echo "Preparing to run commands during container boot..."
