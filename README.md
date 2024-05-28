@@ -53,7 +53,7 @@ GitHub action.
     image: rpi-os-image.img
     shell: su - pi {0}
     run: |
-      #!/usr/bin/env bash -eux
+      #!/usr/bin/env -S bash -eux
       sudo apt-get update
       sudo apt-get install -y figlet
       figlet "I am $USER!"
