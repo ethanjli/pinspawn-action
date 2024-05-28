@@ -72,7 +72,7 @@ jobs:
           shell: >
             sh -c "bash -c \"bash -c 'sh -c {0}'\""
           run: |
-            /usr/games/cowsay "I am $USER in $SHELL!"
+            /usr/games/cowsay "I am $USER!"
 
       # Run shell commands as the pi user
 
