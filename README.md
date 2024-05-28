@@ -51,12 +51,13 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    shell: su - pi -c {0}
+    shell: >
+        su - pi -c "bash -e {0}"
     run: |
       #!/usr/bin/bash -eux
       sudo apt-get update
       sudo apt-get install -y figlet
-      figlet "I am $USER!"
+      figlet "I am $USER in $SHELL!"
 ```
 
 ### Run a specific command without a shell
