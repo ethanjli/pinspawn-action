@@ -1,6 +1,6 @@
 # PiNspawn GitHub Action
 
-GitHub action to use `systemd-nspawn` to run commands in a namespace container attached to a Raspberry Pi SD card image
+GitHub action to use `systemd-nspawn` to run commands in a (un)booted container on a Raspberry Pi SD card image
 
 [`systemd-nspawn`](https://www.freedesktop.org/software/systemd/man/latest/systemd-nspawn.html) is
 used to run commands in a light-weight namespace container, like chroot but with full virtualization

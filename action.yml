@@ -1,6 +1,6 @@
 name: "Run PiNspawn"
 author: ethanjli
-description: Uses `systemd-nspawn` to run commands in a namespace container attached to a Raspberry Pi SD card image.
+description: Uses `systemd-nspawn` to run commands in a (un)booted container on a Raspberry Pi SD card image.
 branding:
   icon: external-link
   color: red
@@ -54,7 +54,7 @@ runs:
         fi
 
     - id: run-pinspawn
-      shell: bash
+      shell: bash -eux {0}
       run: |
         case "${{ inputs.shell }}" in
           '')
@@ -97,10 +97,8 @@ runs:
         fi
 
         run_commands="$(sudo mktemp --tmpdir=/tmp pinspawn-run-script.XXXXXXX)"
-        heredoc_delimiter="$(mktemp -u PINSPAWN-RUN-EOF-XXXXXXX)"
-        cat << "$heredoc_delimiter" > "$run_commands"
-        ${{ inputs.run }}
-        "$heredoc_delimiter"
         ${{ github.action_path }}/pinspawn.sh \
           "${{ inputs.image }}" "$boot_run_service" "${{ inputs.args }}" "$shell_command" \
-          < "$run_commands"
+        <<
+        ${{ inputs.run }}
+
