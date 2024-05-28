@@ -86,19 +86,20 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_service="$(\
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn_XXXXXXX \
   )"
-  sudo awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)' "$boot_run_service" | \
-    sudo tee "$boot_tmp_service" > /dev/null
-  sudo cat "$boot_tmp_service"
-  if [ ! -s "$boot_tmp_service" ]; then
-    # boot_run_service didn't have {0}, so we'll just use it verbatim:
-    sudo cp "$boot_run_service" "$boot_tmp_service"
-  fi
+  while IFS="" read -r line || [ -n "$line" ]; do
+    interpolated="$(printf '%s' "$line" | awk -v r="$line" -e 'gsub(/{0}/, r)')"
+    if [ -z "$interpolated" ]; then
+      # line didn't have {0}, so we'll just use it verbatim:
+      interpolated="$line"
+    fi
+    printf '%s' "$interpolated" | sudo tee --append "$boot_tmp_service"
+  done < "$boot_run_service"
   echo "Boot run service $boot_tmp_service:"
   sudo cat "$boot_tmp_service"
 
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn_status.XXXXXXX)"
 
-  boot_tmp_service_instance="${boot_tmp_service%'.service'}@$(systemd-escape "$boot_tmp_result").service"
+  boot_tmp_service_instance="${boot_tmp_service%'@.service'}@$(systemd-escape "$boot_tmp_result").service"
   sudo systemd-nspawn --directory "$sysroot" \
     systemctl enable "$boot_tmp_service_instance"
   echo "Running container with boot..."
