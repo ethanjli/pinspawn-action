@@ -59,7 +59,7 @@ runs:
         case "${{ inputs.shell }}" in
           '')
             device="$(sudo losetup -fP --show "${{ inputs.image }}")"
-            if [ sudo systemd-nspawn --image "${device}p2" which bash > /dev/null ]; then
+            if sudo systemd-nspawn --image "${device}p2" which bash > /dev/null; then
               shell_command='bash -e {0}'
             else
               echo "Warning: Falling back to sh because bash wasn't found!"
@@ -69,7 +69,7 @@ runs:
             ;;
           'bash')
             device="$(sudo losetup -fP --show "${{ inputs.image }}")"
-            if [ sudo systemd-nspawn --image "${device}p2" which bash > /dev/null ]; then
+            if sudo systemd-nspawn --image "${device}p2" which bash > /dev/null; then
               shell_command='bash --noprofile --norc -eo pipefail {0}'
             else
               echo "Warning: Falling back to sh because bash wasn't found!"
@@ -88,9 +88,14 @@ runs:
             ;;
         esac
 
+        boot_run_service=""
+        if [ "${{ inputs.boot }}" == "true" ]; then
+          boot_run_service="${{ github.action_path }}/default-boot-run.service"
+          if [ ! -z "${{ inputs.run-service }}" ]; then
+            boot_run_service="${{ inputs.run-service }}"
+          fi
+        fi
+
         cat "${{ inputs.run }}" | \
           ${{ github.action_path }}/pinspawn.sh \
-            "${{ inputs.image }}" \
-            "${{ inputs.boot && (inputs.run-service || format('{0}/{1}', github.action_path, 'default-boot-run.service')) || '' }}" \
-            "${{ inputs.args }}" \
-            "$shell_command"
+            "${{ inputs.image }}" "$boot_run_service" "${{ inputs.args }}" "$shell_command"
