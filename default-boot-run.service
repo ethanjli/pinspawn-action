@@ -4,7 +4,6 @@ After=getty.target
 
 [Service]
 type=oneshot
-Environment=DEBIAN_FRONTEND=noninteractive
 ExecStartPre=echo "Running OS setup..."
 ExecStart=bash -c '{0}; echo "$?" > %I; shutdown now'
 StandardOutput=tty
