@@ -65,7 +65,7 @@ jobs:
 
       # Run a shell with complicated quoting rules
 
-      - name: Run subshell without root permissions
+      - name: Run subshell with complicated quoting rules
         uses: ./
         with:
           image: rpi-os-image.img
@@ -83,7 +83,7 @@ jobs:
         with:
           image: rpi-os-image.img
           shell: >
-            sudo -u pi -c "bash -c \"sh -c 'bash -e {0}'\""
+            sudo -u pi -c "bash -e {0}"
           run: |
             sudo apt-get update
             sudo apt-get install -y figlet
