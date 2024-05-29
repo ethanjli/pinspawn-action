@@ -162,6 +162,7 @@ jobs:
             systemd-analyze critical-chain | cat
             systemd-analyze blame | cat
             systemd-analyze plot > /run/external/bootup-timeline.svg
+            echo "Done!"
 
       - name: Upload the bootup timeline to Job Artifacts
         uses: actions/upload-artifact@v4
