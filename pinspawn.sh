@@ -117,8 +117,10 @@ if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     chown "$user" "${boot_tmp_script#"$sysroot"}"
 
+  boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
+
   boot_tmp_service="$(\
-    sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn_XXXXXXX \
+    sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn.XXXXXXX \
   )"
   readarray -t lines < "$boot_run_service"
   for line in "${lines[@]}"; do
@@ -131,8 +133,6 @@ if [ ! -z "$boot_run_service" ]; then
   sudo chmod a+r "$boot_tmp_service"
   echo "Boot run service $boot_tmp_service:"
   cat "$boot_tmp_service"
-
-  boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn_status.XXXXXXX)"
 
   container_boot_tmp_service="${boot_tmp_service#"$sysroot/etc/systemd/system/"}"
   sudo systemd-nspawn --directory "$sysroot" --quiet \
@@ -155,6 +155,8 @@ if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     systemctl disable "$container_boot_tmp_service"
 
+  sudo rm -f "$boot_tmp_service"
+
   if [ ! -f "$boot_tmp_result" ]; then
     echo "Error: $boot_run_service did not store a result indicating success/failure!"
     exit 1
@@ -171,8 +173,6 @@ if [ ! -z "$boot_run_service" ]; then
     esac
   fi
   sudo rm -f "$boot_tmp_result"
-
-  sudo rm -f "$boot_tmp_service"
 
   sudo rm -f "$boot_tmp_script"
 fi
