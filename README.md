@@ -180,7 +180,10 @@ Inputs:
     [Service]
     Type=exec
     ExecStartPre=echo "Running OS setup..."
-    ExecStart=su - {user} -c '{command}; echo "$?" | sudo tee {result}; sudo shutdown now' &
+    ExecStart=bash -c '\
+      su - {user} -c \'{command}; echo "$?" | sudo tee {result} \'; \
+      shutdown now \
+    ' &
     StandardOutput=tty
 
     [Install]
