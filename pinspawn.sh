@@ -87,7 +87,7 @@ if [ ! -z "$boot_run_service" ]; then
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn_XXXXXXX \
   )"
   while read -r line; do
-    interpolated="$(printf '%s' "$line" | awk -v r="$script_shell_command" -e 'gsub(/{0}/, r)')"
+    interpolated="$(printf '%s' "$line" | awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)')"
     if [ -z "$interpolated" ]; then
       # line didn't have {0}, so we'll just use it verbatim:
       interpolated="$line"
