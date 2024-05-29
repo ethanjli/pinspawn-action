@@ -6,9 +6,9 @@ After=getty.target
 Type=exec
 ExecStartPre=echo "Running OS setup..."
 ExecStart=bash -c '\
-  tmp_result="$(mktemp); \
+  tmp_result="$(mktemp)"; \
   su - {user} -c \'{command}; echo "$?" > "$tmp_result" \'; \
-  mv "$tmp_result}" "{result}; \
+  mv "$tmp_result" "{result}; \
   loginctl user-status {user}; \
   loginctl show-user {user}; \
   loginctl list-users;
