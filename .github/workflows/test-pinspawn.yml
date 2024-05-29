@@ -137,11 +137,8 @@ jobs:
           args: --bind "$(pwd)":/run/external
           boot: true
           run: |
-            while ! systemd-analyze 2>/dev/null; do
-              systemctl list-jobs | cat
-              echo "Waiting for boot to finish..."
-              sleep 10
-            done
+            echo "Waiting for boot to finish..."
+            systemctl is-system-running --wait
             systemd-analyze
             systemd-analyze critical-chain | cat
             systemd-analyze blame | cat

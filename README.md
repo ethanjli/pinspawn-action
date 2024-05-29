@@ -119,7 +119,11 @@ Note: the system in the container will shut down after the specified commands fi
       --bind "$(pwd)":/run/external
     boot: true
     run: |
-      systemd-analyze blame
+      echo "Waiting for boot to finish..."
+      systemctl is-system-running --wait
+      systemd-analyze
+      systemd-analyze critical-chain | cat
+      systemd-analyze blame | cat
       systemd-analyze plot > /run/external/bootup-timeline.svg
 
 - name: Upload the bootup timeline to Job Artifacts

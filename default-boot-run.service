@@ -6,8 +6,16 @@ After=getty.target
 Type=exec
 ExecStartPre=echo "Running OS setup..."
 ExecStart=bash -c '\
-  su - {user} -c \'{command}; echo "$?" | sudo tee {result} \'; \
-  loginctl kill-user {user}; \
+  tmp_result="$(mktemp); \
+  su - {user} -c \'{command}; echo "$?" > "$tmp_result" \'; \
+  mv "$tmp_result}" "{result}; \
+  loginctl user-status {user}; \
+  loginctl show-user {user}; \
+  loginctl list-users;
+  loginctl terminate-user {user}; \
+  loginctl user-status {user}; \
+  loginctl show-user {user}; \
+  loginctl list-users;
   shutdown now \
 ' &
 StandardOutput=tty
