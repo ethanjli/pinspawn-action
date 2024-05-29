@@ -20,7 +20,7 @@ GitHub action.
 
 ```yaml
 - name: Install and run cowsay
-  uses: ethanjli/pinspawn-action@v0.1.0
+  uses: ethanjli/pinspawn-action@v0.1.1
   with:
     image: rpi-os-image.img
     run: |
@@ -33,7 +33,7 @@ GitHub action.
 
 ```yaml
 - name: Run in Python
-  uses: ethanjli/pinspawn-action@v0.1.0
+  uses: ethanjli/pinspawn-action@v0.1.1
   with:
     image: rpi-os-image.img
     shell: python
@@ -48,7 +48,7 @@ GitHub action.
 
 ```yaml
 - name: Run without root permissions
-  uses: ethanjli/pinspawn-action@v0.1.0
+  uses: ethanjli/pinspawn-action@v0.1.1
   with:
     image: rpi-os-image.img
     user: pi
@@ -74,7 +74,7 @@ GitHub action.
   run: chmod a+x figlet.sh
 
 - name: Run script directly
-  uses: ethanjli/pinspawn-action@v0.1.0
+  uses: ethanjli/pinspawn-action@v0.1.1
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
@@ -94,7 +94,7 @@ GitHub action.
       dtoverlay=i2c-rtc,rv3028,trickle-resistor-ohms=3000,backup-switchover-mode=1
 
 - name: Modify bootloader configuration
-  uses: ethanjli/pinspawn-action@v0.1.0
+  uses: ethanjli/pinspawn-action@v0.1.1
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
@@ -112,7 +112,7 @@ Note: the system in the container will shut down after the specified commands fi
 
 ```yaml
 - name: Analyze systemd boot process
-  uses: ethanjli/pinspawn-action@v0.1.0
+  uses: ethanjli/pinspawn-action@v0.1.1
   with:
     image: rpi-os-image.img
     args: |
