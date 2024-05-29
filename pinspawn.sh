@@ -39,6 +39,49 @@ unmount_image() {
   sudo losetup -d "$device"
 }
 
+interpolate_boot_run_service_line() {
+  local line
+  line="$1"
+  local user
+  user="$2"
+  local shell_script_command
+  shell_script_command="$3"
+  local result_file
+  result_file="$4"
+
+  local interpolated
+  interpolated="$line"
+  local interpolated_next
+  # Interpolate {user}:
+  interpolated_next="$(\
+    printf '%s' "$line" | awk -v r="$user" -e 'gsub(/{user}/, r)' \
+  )"
+  if [ -z "$interpolated_next" ]; then # line didn't have {user}
+    interpolated_next="$interpolated"
+  fi
+  interpolated="$interpolated_next"
+
+  # Interpolate {command}:
+  interpolated_next="$(\
+    printf '%s' "$line" | awk -v r="$shell_script_command" -e 'gsub(/{command}/, r)' \
+  )"
+  if [ -z "$interpolated_next" ]; then # line didn't have {command}
+    interpolated_next="$interpolated"
+  fi
+  interpolated="$interpolated_next"
+
+  # Interpolate {result}:
+  interpolated_next="$(\
+    printf '%s' "$line" | awk -v r="$result_file" -e 'gsub(/{result}/, r)' \
+  )"
+  if [ -z "$interpolated_next" ]; then # line didn't have {result}
+    interpolated_next="$interpolated"
+  fi
+  interpolated="$interpolated_next"
+
+  echo "$interpolated"
+}
+
 image="$1" # e.g. "rpi-os-image.img"
 user="$2" # e.g. "pi"
 boot_run_service="$3" # e.g. "/path/to/default-boot-run.service"
@@ -64,9 +107,6 @@ if [ -z "$shell_script_command" ]; then
   shell_script_command="$shell_command"
 fi
 
-if [ ! -z "$user" ]; then
-  args="--user $user $args"
-fi
 if [ ! -z "$boot_run_service" ]; then
   echo "Preparing to run commands during container boot..."
   args="--boot $args"
@@ -78,16 +118,15 @@ if [ ! -z "$boot_run_service" ]; then
     chown "$user" "${boot_tmp_script#"$sysroot"}"
 
   boot_tmp_service="$(\
-    sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn_XXXXXXX \
+    sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn_XXXXXXX \
   )"
   readarray -t lines < "$boot_run_service"
   for line in "${lines[@]}"; do
-    interpolated="$(printf '%s' "$line" | awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)')"
-    if [ -z "$interpolated" ]; then
-      # line didn't have {0}, so we'll just use it verbatim:
-      interpolated="$line"
-    fi
-    printf '%s\n' "$interpolated" | sudo tee --append "$boot_tmp_service" > /dev/null
+    printf '%s\n' "$(\
+      interpolate_boot_run_service_line \
+        "$line" "$user" "$shell_script_command" "${boot_tmp_result#"$sysroot"}" \
+    )" | \
+      sudo tee --append "$boot_tmp_service" > /dev/null
   done
   sudo chmod a+r "$boot_tmp_service"
   echo "Boot run service $boot_tmp_service:"
@@ -95,16 +134,18 @@ if [ ! -z "$boot_run_service" ]; then
 
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn_status.XXXXXXX)"
 
-  instance_label="$(systemd-escape "${boot_tmp_result#"$sysroot"}")"
-  boot_tmp_service_instance="${boot_tmp_service%'@.service'}@$instance_label.service"
-  container_boot_tmp_service_instance="${boot_tmp_service_instance#"$sysroot/etc/systemd/system/"}"
+  container_boot_tmp_service="${boot_tmp_service#"$sysroot/etc/systemd/system/"}"
   sudo systemd-nspawn --directory "$sysroot" --quiet \
-    systemctl enable "$container_boot_tmp_service_instance"
+    systemctl enable "$container_boot_tmp_service"
 
   echo "Running container with boot..."
   # We use eval to work around word splitting in strings inside quotes in shell_script_command:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args"
 else
+  # We can't boot if a non-root user is set, so we only set this flag for unbooted containers:
+  if [ ! -z "$user" ]; then
+    args="--user $user $args"
+  fi
   echo "Running container without boot..."
   # We use eval to work around word splitting in strings inside quotes in shell_script_command:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args $shell_script_command"
@@ -112,7 +153,7 @@ fi
 
 if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" --quiet \
-    systemctl disable "$container_boot_tmp_service_instance"
+    systemctl disable "$container_boot_tmp_service"
 
   if [ ! -f "$boot_tmp_result" ]; then
     echo "Error: $boot_run_service did not store a result indicating success/failure!"

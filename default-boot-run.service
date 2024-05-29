@@ -5,7 +5,7 @@ After=getty.target
 [Service]
 Type=exec
 ExecStartPre=echo "Running OS setup..."
-ExecStart=bash -c '{0}; echo "$?" > %I; shutdown now' &
+ExecStart=su - {user} -c '{command}; echo "$?" | sudo tee {result}; sudo shutdown now' &
 StandardOutput=tty
 
 [Install]

@@ -180,17 +180,22 @@ Inputs:
     [Service]
     Type=exec
     ExecStartPre=echo "Running OS setup..."
-    ExecStart=bash -c '{0}; echo "$?" > %I; shutdown now' &
+    ExecStart=su - {user} -c '{command}; echo "$?" | sudo tee {result}; sudo shutdown now' &
     StandardOutput=tty
 
     [Install]
     WantedBy=getty.target
     ```
 
-    Note that `{0}` in the template will be replaced with a command to run your specified `run`
-    commands using your specified `shell`, while `%I` will be replaced with the path of a file
-    whose contents will be checked after the container finishes running to determine whether the
-    command finished successfully (in which case the file should be the string `0`).
+    This service file template has string interpolation applied to the following strings:
+
+    - `{user}` will be replaced with the value of the action's `user` input.
+    - `{command}` will be replaced with a command to run your specified `run` commands using your
+      specified `shell`
+    - `{result}` will be replaced with the path of a temporary file whose contents will be checked
+      after the container finishes running to determine whether the command finished successfully
+      (in which case the file should be the string `0`); this file is interpreted holding as a
+      return code.
 
   - If this flag is enabled, then any arguments specified as the command line in `args` are used as
     arguments for the init program, i.e. `systemd-nspawn` will be invoked like
