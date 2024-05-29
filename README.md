@@ -139,15 +139,15 @@ Note: the system in the container will shut down after the specified commands fi
 
 Inputs:
 
-| Input         | Allowed values                | Required?            | Description                                                  |
-|---------------|-------------------------------|----------------------|--------------------------------------------------------------|
-| `image`       | file path                     | yes                  | Path of the image to use for the container.                  |
-| `args`        | `systemd-nspawn` options/args | no (default ``)      | Options, args, and/or a command to pass to `systemd-nspawn`. |
-| `shell`       | ``, `bash`, `sh`, `python`    | no (default ``)      | The shell to use for running commands.                       |
-| `run`         | shell commands                | no (default ``)      | Commands to run in the shell.                                |
-| `user`        | name of user in image         | no (default `root`)  | The user to run commands as.                                 |
-| `boot`        | `false`, `true`               | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.    |
-| `run-service` | file path                     | no (default ``)      | systemd service to run `shell` with the `run` commands.      |
+| Input         | Allowed values                   | Required?            | Description                                                  |
+|---------------|----------------------------------|----------------------|--------------------------------------------------------------|
+| `image`       | file path                        | yes                  | Path of the image to use for the container.                  |
+| `args`        | `systemd-nspawn` options/args    | no (default ``)      | Options, args, and/or a command to pass to `systemd-nspawn`. |
+| `shell`       | ``, `bash`, `sh`, `python`, etc. | no (default ``)      | The shell to use for running commands.                       |
+| `run`         | shell commands                   | no (default ``)      | Commands to run in the shell.                                |
+| `user`        | name of user in image            | no (default `root`)  | The user to run commands as.                                 |
+| `boot`        | `false`, `true`                  | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.    |
+| `run-service` | file path                        | no (default ``)      | systemd service to run `shell` with the `run` commands.      |
 
 - `image` must be the path of an unmounted raw disk image (such as a Raspberry Pi OS SD card image),
   where partition 2 should be mounted as the root filesystem (i.e. `/`) and partition 1 should be
@@ -201,7 +201,7 @@ Inputs:
       specified `shell`
     - `{result}` will be replaced with the path of a temporary file whose contents will be checked
       after the container finishes running to determine whether the command finished successfully
-      (in which case the file should be the string `0`); this file is interpreted holding as a
+      (in which case the file should be the string `0`); this file is interpreted as holding a
       return code.
 
   - If this flag is enabled, then any arguments specified as the command line in `args` are used as

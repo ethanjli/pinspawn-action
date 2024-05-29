@@ -5,7 +5,7 @@ action_root="$(dirname "$(realpath "$BASH_SOURCE")")"
 case "$INPUT_SHELL" in
   '')
     device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
-    if sudo systemd-nspawn --image "${device}p2" which bash > /dev/null; then
+    if sudo systemd-nspawn --quiet --image "${device}p2" which bash > /dev/null; then
       shell_command='bash -e {0}'
     else
       echo "Warning: Falling back to sh because bash wasn't found!"
@@ -15,7 +15,7 @@ case "$INPUT_SHELL" in
     ;;
   'bash')
     device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
-    if sudo systemd-nspawn --image "${device}p2" which bash > /dev/null; then
+    if sudo systemd-nspawn --quiet --image "${device}p2" which bash > /dev/null; then
       shell_command='bash --noprofile --norc -eo pipefail {0}'
     else
       echo "Warning: Falling back to sh because bash wasn't found!"

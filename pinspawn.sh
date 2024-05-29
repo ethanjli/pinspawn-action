@@ -88,9 +88,11 @@ boot_run_service="$3" # e.g. "/path/to/default-boot-run.service"
 args="$4" # e.g. "--bind /path/in/host:/path/in/container"
 shell_command="$5" # e.g. "bash -e {0}"
 
+# Mount the image
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot")"
 
+# Make a shell script with the run commands
 # Note: we can't use `/tmp` because it will be remounted by the container
 tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 # Note: this command reads & processes stdin:
@@ -99,6 +101,8 @@ sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
 sudo systemd-nspawn --directory "$sysroot" --quiet \
   chown "$user" "$container_tmp_script"
+
+# Prepare the shell script command
 shell_script_command="$(\
   printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
 )"
@@ -111,14 +115,15 @@ if [ ! -z "$boot_run_service" ]; then
   echo "Preparing to run commands during container boot..."
   args="--boot $args"
 
+  # Inject the shell script into the container
   boot_tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
   sudo cp "$tmp_script" "$boot_tmp_script"
   sudo chmod a+x "$boot_tmp_script"
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     chown "$user" "${boot_tmp_script#"$sysroot"}"
 
+  # Inject into the container a service to run the shell script command and record its return value
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
-
   boot_tmp_service="$(\
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn.XXXXXXX \
   )"
@@ -133,13 +138,12 @@ if [ ! -z "$boot_run_service" ]; then
   sudo chmod a+r "$boot_tmp_service"
   echo "Boot run service $boot_tmp_service:"
   cat "$boot_tmp_service"
-
   container_boot_tmp_service="${boot_tmp_service#"$sysroot/etc/systemd/system/"}"
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     systemctl enable "$container_boot_tmp_service"
 
   echo "Running container with boot..."
-  # We use eval to work around word splitting in strings inside quotes in shell_script_command:
+  # We use eval to work around word splitting in strings inside quotes in args:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args"
 else
   # We can't boot if a non-root user is set, so we only set this flag for unbooted containers:
@@ -152,11 +156,14 @@ else
 fi
 
 if [ ! -z "$boot_run_service" ]; then
+  # Clean up the injected service
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     systemctl disable "$container_boot_tmp_service"
-
   sudo rm -f "$boot_tmp_service"
 
+  # Check the return code of the shell script
+  # Note: this is not needed in unbooted containers because errors there are propagated to the
+  # caller of the script
   if [ ! -f "$boot_tmp_result" ]; then
     echo "Error: $boot_run_service did not store a result indicating success/failure!"
     exit 1
@@ -174,9 +181,12 @@ if [ ! -z "$boot_run_service" ]; then
   fi
   sudo rm -f "$boot_tmp_result"
 
+  # Clean up the shell script
   sudo rm -f "$boot_tmp_script"
 fi
 
+# Clean up the shell script
 sudo rm -f "$tmp_script"
 
+# Clean up the mount
 unmount_image "$device" "$sysroot"
