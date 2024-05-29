@@ -177,17 +177,17 @@ Inputs:
 
     ```
     [Unit]
-    Description=Perform booted OS setup
+    Description=Run commands in booted OS
     After=getty.target
 
     [Service]
     Type=exec
-    ExecStartPre=echo "Running OS setup..."
-    ExecStart=bash -c '\
-      su - {user} -c \'{command}; echo "$?" | sudo tee {result} \'; \
-      loginctl kill-user {user}; \
+    ExecStart=bash -c "\
+      chown {user} {result}; \
+      su - {user} -c '{command}; echo $? | tee {result}'; \
+      echo Shutting down...; \
       shutdown now \
-    ' &
+    " &
     StandardOutput=tty
 
     [Install]
