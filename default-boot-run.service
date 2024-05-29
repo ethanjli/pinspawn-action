@@ -7,15 +7,16 @@ Type=exec
 ExecStartPre=echo "Running OS setup..."
 ExecStart=bash -x -c '\
   tmp_result="$(mktemp)"; \
-  su - {user} -c \'{command}; echo "$?" > "$tmp_result" \'; \
+  su - {user} -c \'{command}; echo "$?" > "$tmp_result"\'; \
+  echo "Shutting down..."; \
   mv "$tmp_result" "{result}"; \
-  loginctl user-status {user}; \
-  loginctl show-user {user}; \
-  loginctl list-users; \
+  loginctl user-status {user} | cat; \
+  loginctl show-user {user} | cat; \
+  loginctl list-users | cat; \
   loginctl terminate-user {user}; \
-  loginctl user-status {user}; \
-  loginctl show-user {user}; \
-  loginctl list-users; \
+  loginctl user-status {user} | cat; \
+  loginctl show-user {user} | cat; \
+  loginctl list-users | cat; \
   shutdown now \
 ' &
 StandardOutput=tty
