@@ -11,11 +11,11 @@ ExecStart=bash -c '\
   mv "$tmp_result" "{result}"; \
   loginctl user-status {user}; \
   loginctl show-user {user}; \
-  loginctl list-users;
+  loginctl list-users; \
   loginctl terminate-user {user}; \
   loginctl user-status {user}; \
   loginctl show-user {user}; \
-  loginctl list-users;
+  loginctl list-users; \
   shutdown now \
 ' &
 StandardOutput=tty
