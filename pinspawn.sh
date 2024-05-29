@@ -95,8 +95,9 @@ if [ ! -z "$boot_run_service" ]; then
     fi
     printf '%s\n' "$interpolated" | sudo tee --append "$boot_tmp_service"
   done
+  sudo chmod a+r "$boot_tmp_service"
   echo "Boot run service $boot_tmp_service:"
-  sudo cat "$boot_tmp_service"
+  cat "$boot_tmp_service"
 
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn_status.XXXXXXX)"
 
