@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -eux
 
 mount_image() {
   local image
@@ -54,7 +54,7 @@ interpolate_boot_run_service_line() {
   local interpolated_next
   # Interpolate {user}:
   interpolated_next="$(\
-    printf '%s' "$line" | awk -v r="$user" -e 'gsub(/{user}/, r)' \
+    printf '%s' "$interpolated" | awk -v r="$user" -e 'gsub(/{user}/, r)' \
   )"
   if [ -z "$interpolated_next" ]; then # line didn't have {user}
     interpolated_next="$interpolated"
@@ -63,7 +63,7 @@ interpolate_boot_run_service_line() {
 
   # Interpolate {command}:
   interpolated_next="$(\
-    printf '%s' "$line" | awk -v r="$shell_script_command" -e 'gsub(/{command}/, r)' \
+    printf '%s' "$interpolated" | awk -v r="$shell_script_command" -e 'gsub(/{command}/, r)' \
   )"
   if [ -z "$interpolated_next" ]; then # line didn't have {command}
     interpolated_next="$interpolated"
@@ -72,7 +72,7 @@ interpolate_boot_run_service_line() {
 
   # Interpolate {result}:
   interpolated_next="$(\
-    printf '%s' "$line" | awk -v r="$result_file" -e 'gsub(/{result}/, r)' \
+    printf '%s' "$interpolated" | awk -v r="$result_file" -e 'gsub(/{result}/, r)' \
   )"
   if [ -z "$interpolated_next" ]; then # line didn't have {result}
     interpolated_next="$interpolated"
