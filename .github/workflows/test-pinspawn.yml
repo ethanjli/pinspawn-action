@@ -154,3 +154,17 @@ jobs:
           path: bootup-timeline.svg
           if-no-files-found: error
           overwrite: true
+
+      # Run shell commands as the pi user in a booted container
+
+      - name: Run as user in booted container
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          user: pi
+          boot: true
+          run: |
+            /usr/games/cowsay "I am $USER!"
+            if [ "$USER" != "pi" ]; then
+              exit 666
+            fi
