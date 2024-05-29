@@ -87,7 +87,7 @@ if [ ! -z "$boot_run_service" ]; then
       # line didn't have {0}, so we'll just use it verbatim:
       interpolated="$line"
     fi
-    printf '%s\n' "$interpolated" | sudo tee --append "$boot_tmp_service"
+    printf '%s\n' "$interpolated" | sudo tee --append "$boot_tmp_service" > /dev/null
   done
   sudo chmod a+r "$boot_tmp_service"
   echo "Boot run service $boot_tmp_service:"
@@ -115,11 +115,11 @@ if [ ! -z "$boot_run_service" ]; then
     systemctl disable "$container_boot_tmp_service_instance"
 
   if [ ! -f "$boot_tmp_result" ]; then
-    echo "Error: $boot_run_service_instance did not store a result indicating success/failure!"
+    echo "Error: $boot_run_service did not store a result indicating success/failure!"
     exit 1
   elif [ "$(sudo cat "$boot_tmp_result")" != "0" ]; then
     result="$(sudo cat "$boot_tmp_result")"
-    echo "Error: $boot_run_service_instance failed while running $shell_script_command: $result"
+    echo "Error: $boot_run_service failed while running $shell_script_command: $result"
     case "$result" in
       '' | *[!0-9]*)
         exit 1

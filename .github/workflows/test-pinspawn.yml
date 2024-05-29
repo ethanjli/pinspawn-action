@@ -138,9 +138,9 @@ jobs:
           boot: true
           run: |
             while ! systemd-analyze 2>/dev/null; do
+              systemctl list-jobs | cat
               echo "Waiting for boot to finish..."
               sleep 10
-              systemctl list-jobs | cat
             done
             systemd-analyze
             systemd-analyze critical-chain | cat
