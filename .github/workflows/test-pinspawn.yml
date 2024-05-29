@@ -154,9 +154,10 @@ jobs:
           args: --bind "$(pwd)":/run/external
           boot: true
           run: |
-            #!/usr/bin/env -S bash -x
             echo "Waiting for boot to finish..."
-            systemctl is-system-running --wait
+            # Normally the system will be in a degraded state because several units can't start
+            # unless booted on a real bare-metal Raspberry Pi:
+            systemctl is-system-running --wait > /dev/null || true
             systemd-analyze
             systemd-analyze critical-chain | cat
             systemd-analyze blame | cat
