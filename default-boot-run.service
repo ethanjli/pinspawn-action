@@ -4,10 +4,10 @@ After=getty.target
 
 [Service]
 Type=exec
-ExecStart=bash -x -c "\
-  echo 'Running OS setup...'; \
+ExecStart=bash -x -c '\
+  echo "Running OS setup..."; \
   tmp_result=$(mktemp); \
-  su - {user} -c '{command}; echo $? > $tmp_result'; \
+  su - {user} -c "{command}; echo $? | tee $tmp_result"; \
   mv $tmp_result {result}; \
   echo Shutting down...; \
   loginctl user-status {user} | cat; \
@@ -18,7 +18,7 @@ ExecStart=bash -x -c "\
   loginctl show-user {user} | cat; \
   loginctl list-users | cat; \
   shutdown now \
-" &
+' &
 StandardOutput=tty
 
 [Install]
