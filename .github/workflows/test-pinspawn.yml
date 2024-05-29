@@ -23,7 +23,7 @@ jobs:
 
       - name: Download and cache base image
         id: download-base
-        uses: ethanjli/cached-download-action@v0.1.0
+        uses: ethanjli/cached-download-action@v0.1.1
         with:
           url: https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz
           destination: /tmp/2024-03-15-raspios-bookworm-arm64-lite.img.xz

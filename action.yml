@@ -35,7 +35,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - shell: bash
+    - name: Install dependencies for PiNspwan
+      shell: bash
       run: |
         is_installed() {
           apt-cache policy "$1" | grep 'Installed:' | grep -v '(none)' > /dev/null
@@ -57,7 +58,8 @@ runs:
           sudo apt-get install $packages
         fi
 
-    - id: run-pinspawn
+    - Name: Run PiNspawn
+      id: run-pinspawn
       shell: bash
       env:
         INPUT_IMAGE: ${{ inputs.image }}
@@ -68,47 +70,4 @@ runs:
         INPUT_BOOT: ${{ inputs.boot }}
         INPUT_RUN_SERVICE: ${{ inputs.run-service }}
       run: |
-        case "$INPUT_SHELL" in
-          '')
-            device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
-            if sudo systemd-nspawn --image "${device}p2" which bash > /dev/null; then
-              shell_command='bash -e {0}'
-            else
-              echo "Warning: Falling back to sh because bash wasn't found!"
-              shell_command='sh -e {0}'
-            fi
-            sudo losetup -d "$device"
-            ;;
-          'bash')
-            device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
-            if sudo systemd-nspawn --image "${device}p2" which bash > /dev/null; then
-              shell_command='bash --noprofile --norc -eo pipefail {0}'
-            else
-              echo "Warning: Falling back to sh because bash wasn't found!"
-              shell_command='sh -e {0}'
-            fi
-            sudo losetup -d "$device"
-            ;;
-          'python')
-            shell_command='python {0}'
-            ;;
-          'sh')
-            shell_command='sh -e {0}'
-            ;;
-          *)
-            shell_command="$INPUT_SHELL"
-            ;;
-        esac
-
-        boot_run_service=""
-        if [ "$INPUT_BOOT" == "true" ]; then
-          boot_run_service="${{ github.action_path }}/default-boot-run.service"
-          if [ ! -z "$INPUT_RUN_SERVICE" ]; then
-            boot_run_service="$INPUT_RUN_SERVICE"
-          fi
-        fi
-
-        echo "Running pinspawn.sh \"$INPUT_IMAGE\" \"$INPUT_USER\" \"$boot_run_service\" \"$INPUT_ARGS\" \"$shell_command\"..."
-        echo "$INPUT_RUN" | \
-          ${{ github.action_path }}/pinspawn.sh \
-          "$INPUT_IMAGE" "$INPUT_USER" "$boot_run_service" "$INPUT_ARGS" "$shell_command"
+        ${{ github.action_path }}/gha-wrapper-pinspawn.sh
