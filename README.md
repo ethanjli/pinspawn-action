@@ -109,7 +109,7 @@ GitHub action.
 
 ### Run shell commands in a booted container
 
-Note: the system will shut down after the specified commands finish running.
+Note: the system in the container will shut down after the specified commands finish running.
 
 ```yaml
 - name: Analyze systemd boot process
@@ -169,7 +169,8 @@ Inputs:
   program in the image (typically systemd) and invoke it as PID 1, instead of a shell.
 
   - The provided `run` commands will be triggered by a temporary system service defined with the
-    following template (unless you specify a different service using the `run-service` input):
+    following template (unless you specify a different service file template using the `run-service`
+    input):
 
     ```
     [Unit]
@@ -191,7 +192,6 @@ Inputs:
     whose contents will be checked after the container finishes running to determine whether the
     command finished successfully (in which case the file should be the string `0`).
 
-  - After any provided `run` commands finish executing, the container will shut down.
   - If this flag is enabled, then any arguments specified as the command line in `args` are used as
     arguments for the init program, i.e. `systemd-nspawn` will be invoked like
     `systemd-nspawn --boot {args}`.
