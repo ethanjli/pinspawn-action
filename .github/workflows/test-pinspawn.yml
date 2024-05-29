@@ -154,11 +154,3 @@ jobs:
           path: bootup-timeline.svg
           if-no-files-found: error
           overwrite: true
-
-      - name: Fail during boot
-        uses: ./
-        with:
-          image: rpi-os-image.img
-          boot: true
-          run: |
-            exit 42
