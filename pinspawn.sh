@@ -101,7 +101,7 @@ if [ ! -z "$boot_run_service" ]; then
 
   instance_label="$(systemd-escape "$boot_tmp_result")"
   boot_tmp_service_instance="${container_boot_tmp_service%'@.service'}@$instance_label.service"
-  container_boot_tmp_service=${boot_tmp_service#"$sysroot"}"
+  container_boot_tmp_service="${boot_tmp_service#"$sysroot"}"
   sudo systemd-nspawn --directory "$sysroot" \
     systemctl enable "$container_boot_tmp_service_instance"
   echo "Running container with boot..."
