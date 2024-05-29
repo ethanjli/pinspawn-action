@@ -80,7 +80,6 @@ GitHub action.
     args: --bind "$(pwd)":/run/external
     user: pi
     shell: /run/external/figlet.sh
-
 ```
 
 ### Run shell commands with one or more bind mounts from the host OS
@@ -182,6 +181,7 @@ Inputs:
     ExecStartPre=echo "Running OS setup..."
     ExecStart=bash -c '\
       su - {user} -c \'{command}; echo "$?" | sudo tee {result} \'; \
+      loginctl kill-user {user}; \
       shutdown now \
     ' &
     StandardOutput=tty
