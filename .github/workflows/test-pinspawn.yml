@@ -128,6 +128,23 @@ jobs:
       - name: Print the bootloader config
         run: cat boot.config
 
+      - name: Query installed packages
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          args: --bind "$(pwd)":/run/external
+          run: |
+            #/usr/bin/env bash -x
+            dpkg-query -l | tee > /run/external/installed-packages.txt
+
+      - name: Upload the bootup timeline to Job Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: installed-packages
+          path: installed-packages.txt
+          if-no-files-found: error
+          overwrite: true
+
       # Run shell commands in a booted container
 
       - name: Analyze systemd boot process
@@ -137,6 +154,7 @@ jobs:
           args: --bind "$(pwd)":/run/external
           boot: true
           run: |
+            #!/usr/bin/env -S bash -x
             echo "Waiting for boot to finish..."
             systemctl is-system-running --wait
             systemd-analyze
