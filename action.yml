@@ -58,7 +58,7 @@ runs:
           sudo apt-get install $packages
         fi
 
-    - Name: Run PiNspawn
+    - name: Run PiNspawn
       id: run-pinspawn
       shell: bash
       env:
