@@ -86,29 +86,26 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_service="$(\
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix="@.service" pinspawn_XXXXXXX \
   )"
-  while read -r line; do
+  readarray -t lines < "$boot_run_service"
+  for line in "${lines[@]}"; do
     interpolated="$(printf '%s' "$line" | awk -v r="$shell_script_command" -e 'gsub(/{0}/, r)')"
     if [ -z "$interpolated" ]; then
       # line didn't have {0}, so we'll just use it verbatim:
       interpolated="$line"
     fi
     printf '%s\n' "$interpolated" | sudo tee --append "$boot_tmp_service"
-  done < "$boot_run_service"
+  done
   echo "Boot run service $boot_tmp_service:"
   sudo cat "$boot_tmp_service"
 
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn_status.XXXXXXX)"
 
-  instance_label="$(systemd-escape "$boot_tmp_result")"
-  boot_tmp_service_instance="${boot_tmp_service%'@.service'}@$instance_label"
-  container_boot_tmp_service_instance="${boot_tmp_service_instance#"$sysroot"}.service"
-  container_boot_tmp_service="${boot_tmp_service#"$sysroot"}"
-  sudo systemd-nspawn --directory "$sysroot" \
-    cat "$container_boot_tmp_service"
-  sudo systemd-nspawn --directory "$sysroot" \
-    systemctl enable "${container_boot_tmp_service%'@.service'}@foo.service"
+  instance_label="$(systemd-escape "${boot_tmp_result#"$sysroot"}")"
+  boot_tmp_service_instance="${boot_tmp_service%'@.service'}@$instance_label.service"
+  container_boot_tmp_service_instance="${boot_tmp_service_instance#"$sysroot/etc/systemd/system"}"
   sudo systemd-nspawn --directory "$sysroot" \
     systemctl enable "$container_boot_tmp_service_instance"
+
   echo "Running container with boot..."
   # We use eval to work around word splitting in strings inside quotes in shell_script_command:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args"
