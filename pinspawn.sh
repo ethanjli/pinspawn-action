@@ -6,24 +6,20 @@ mount_image() {
   local sysroot
   sysroot="${2:-}"
 
-  echo "Mounting $image..." 1>&2
   device="$(sudo losetup -fP --show "$image")"
   if [ -z "$device" ]; then
     echo "Error: couldn't mount $image!"
     return 1
   fi
-  echo "Mounted to $device!" 1>&2
 
   if [ -z "$sysroot" ]; then
     echo "$device"
     return 0
   fi
 
-  echo "Mounting $device..." 1>&2
   sudo mkdir -p "$sysroot"
   sudo mount "${device}p2" "$sysroot" 1>&2
   sudo mount "${device}p1" "$sysroot/boot" 1>&2
-  echo "Mounted to $sysroot!" 1>&2
 
   echo $device
 }
@@ -35,13 +31,11 @@ unmount_image() {
   sysroot="${2:-}"
 
   if [ ! -z "$sysroot" ]; then
-    echo "Unmounting $sysroot..." 1>&2
     sudo umount "$sysroot/boot"
     sudo umount "$sysroot"
   fi
 
-  echo "Unmounting $device..." 1>&2
-  sudo e2fsck -p -f "${device}p2"
+  sudo e2fsck -p -f "${device}p2" | grep -v 'could be narrower.  IGNORED.'
   sudo losetup -d "$device"
 }
 
