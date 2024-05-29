@@ -137,6 +137,7 @@ jobs:
           args: --bind "$(pwd)":/run/external
           boot: true
           run: |
+            systemctl list-jobs
             echo "Waiting for bootup to finish..."
             systemctl is-system-running --wait
             systemd-analyze blame
