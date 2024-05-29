@@ -92,7 +92,7 @@ if [ ! -z "$boot_run_service" ]; then
       # line didn't have {0}, so we'll just use it verbatim:
       interpolated="$line"
     fi
-    printf '%s' "$interpolated" | sudo tee --append "$boot_tmp_service"
+    printf '%s\n' "$interpolated" | sudo tee --append "$boot_tmp_service"
   done < "$boot_run_service"
   echo "Boot run service $boot_tmp_service:"
   sudo cat "$boot_tmp_service"
