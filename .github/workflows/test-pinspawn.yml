@@ -154,7 +154,6 @@ jobs:
           args: --bind "$(pwd)":/run/external
           boot: true
           run: |
-            #!/usr/bin/bash -eux
             while ! systemd-analyze 2>/dev/null; do
               echo "Waiting for boot to finish..."
               sleep 5
