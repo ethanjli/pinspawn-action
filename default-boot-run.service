@@ -7,9 +7,9 @@ Type=exec
 ExecStartPre=echo "Running OS setup..."
 ExecStart=bash -x -c '\
   tmp_result="$(mktemp)"; \
-  su - {user} -c \'{command}; echo "$?" > "$tmp_result"\'; \
-  echo "Shutting down..."; \
+  su - {user} -c '{command}; echo "$?" > "$tmp_result"'; \
   mv "$tmp_result" "{result}"; \
+  echo "Shutting down..."; \
   loginctl user-status {user} | cat; \
   loginctl show-user {user} | cat; \
   loginctl list-users | cat; \
