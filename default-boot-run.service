@@ -5,7 +5,7 @@ After=getty.target
 [Service]
 Type=exec
 ExecStart=bash -x -c "\
-  echo 'Running OS setup...'
+  echo 'Running OS setup...'; \
   tmp_result=$(mktemp); \
   su - {user} -c '{command}; echo $? > $tmp_result'; \
   mv $tmp_result {result}; \
