@@ -117,8 +117,8 @@ if [ ! -z "$boot_run_service" ]; then
   if [ ! -f "$boot_tmp_result" ]; then
     echo "Error: $boot_run_service_instance did not store a result indicating success/failure!"
     exit 1
-  elif [ "$(cat "$boot_tmp_result")" != "0" ]; then
-    result="$(cat "$boot_tmp_result")"
+  elif [ "$(sudo cat "$boot_tmp_result")" != "0" ]; then
+    result="$(sudo cat "$boot_tmp_result")"
     echo "Error: $boot_run_service_instance failed while running $shell_script_command: $result"
     case "$result" in
       '' | *[!0-9]*)

@@ -177,10 +177,9 @@ Inputs:
     After=getty.target
 
     [Service]
-    Type=oneshot
+    Type=exec
     ExecStartPre=echo "Running OS setup..."
-    ExecStart=bash -c '{0}; echo "$?" > %I'
-    ExecStart=shutdown now
+    ExecStart=bash -c '{0}; echo "$?" > %I; shutdown now' &
     StandardOutput=tty
 
     [Install]

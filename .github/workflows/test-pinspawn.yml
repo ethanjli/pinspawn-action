@@ -137,11 +137,14 @@ jobs:
           args: --bind "$(pwd)":/run/external
           boot: true
           run: |
-            while ! systemd-analyze blame 2>/dev/null; do
+            while ! systemd-analyze 2>/dev/null; do
               echo "Waiting for boot to finish..."
               sleep 10
               systemctl list-jobs | cat
             done
+            systemd-analyze
+            systemd-analyze critical-chain
+            systemd-analyze blame
             systemd-analyze plot > /run/external/bootup-timeline.svg
 
       - name: Upload the bootup timeline to Job Artifacts
