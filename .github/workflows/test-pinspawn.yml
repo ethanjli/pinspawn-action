@@ -137,10 +137,10 @@ jobs:
           args: --bind "$(pwd)":/run/external
           boot: true
           run: |
-            systemctl list-jobs | cat
-            echo "Waiting for bootup to finish..."
-            systemctl is-system-running --wait
-            systemd-analyze blame
+            while ! systemd-analyze blame; do
+              sleep 10
+              systemctl list-jobs | cat
+            done
             systemd-analyze plot > /run/external/bootup-timeline.svg
 
       - name: Upload the bootup timeline to Job Artifacts
