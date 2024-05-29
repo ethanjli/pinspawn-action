@@ -16,7 +16,7 @@ GitHub action.
 
 ## Basic Usage Examples
 
-### Run shell commands
+### Run shell commands as root
 
 ```yaml
 - name: Install and run cowsay
@@ -51,24 +51,35 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    shell: >
-        su - pi -c "bash -e {0}"
+    user: pi
+    shell: sh
     run: |
-      #!/usr/bin/bash -eux
       sudo apt-get update
       sudo apt-get install -y figlet
-      figlet "I am $USER in $SHELL!"
+      figlet -f digital "I am $USER in $SHELL!"
 ```
 
-### Run a specific command without a shell
+### Run an external script directly, with the shell selected by its shebang line
 
 ```yaml
-- name: Print shell
+- name: Make a script on the host
+  uses: 1arp/create-a-file-action@0.4.5
+  with:
+    file: figlet.sh
+    content: |
+      #!/usr/bin/env -S bash -eux
+      figlet -f digital "I am $USER in $SHELL!"
+
+- name: Make the script executable
+  run: chmod a+x figlet.sh
+
+- name: Run script directly
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    shell: >
-      echo "This variable won't be replaced because there's no shell: $SHELL"
+    args: --bind "$(pwd)":/run/external
+    user: pi
+    shell: /run/external/figlet.sh
 
 ```
 
@@ -87,7 +98,7 @@ GitHub action.
   uses: ethanjli/pinspawn-action@v0.1.0
   with:
     image: rpi-os-image.img
-    args: --bind ./:/run/external
+    args: --bind "$(pwd)":/run/external
     run: |
       cat /run/external/boot-config.snippet >> /boot/config.txt
       cp /boot/config.txt /run/external/boot.config
@@ -106,7 +117,7 @@ Note: the system will shut down after the specified commands finish running.
   with:
     image: rpi-os-image.img
     args: |
-      --bind ./:/run/external
+      --bind "$(pwd)":/run/external
     boot: true
     run: |
       systemd-analyze blame
@@ -131,6 +142,7 @@ Inputs:
 | `args`        | `systemd-nspawn` options/args | no (default ``)      | Options, args, and/or a command to pass to `systemd-nspawn`. |
 | `shell`       | ``, `bash`, `sh`, `python`    | no (default ``)      | The shell to use for running commands.                       |
 | `run`         | shell commands                | no (default ``)      | Commands to run in the shell.                                |
+| `user`        | name of user in image         | no (default `root`)  | The user to run commands as.                                 |
 | `boot`        | `false`, `true`               | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.    |
 | `run-service` | file path                     | no (default ``)      | systemd service to run `shell` with the `run` commands.      |
 
@@ -140,6 +152,8 @@ Inputs:
 
 - `args` can be a list of command-line options/arguments for
   [`systemd-nspawn`](https://www.freedesktop.org/software/systemd/man/latest/systemd-nspawn.html).
+  You should not set the `--user` or `--boot` flags here; instead, you should set the `user` and
+  `boot` action inputs.
 
 - If `run` is not left empty, `shell` will be used to execute commands specified in the `run` input.
   You can use built-in `shell` keywords, or you can define a custom set of shell options. The shell
@@ -148,8 +162,8 @@ Inputs:
   Please refer to the GitHub Actions semantics of the `shell` keyword of job steps for details
   about the behavior of this action's `shell` input.
 
-  If you want to run a single custom command without a shell, you should leave `run` empty and
-  provide a custom command as the `shell` input.
+  If you just want to run a single script, you can leave `run` empty and provide that script as the
+  `shell` input. However, you will need to set the appropriate permissions on the script file.
 
 - If `boot` is enabled, this action will use `systemd-nspawn` to automatically search for an init
   program in the image (typically systemd) and invoke it as PID 1, instead of a shell.
@@ -163,10 +177,9 @@ Inputs:
     After=getty.target
 
     [Service]
-    type=oneshot
+    Type=exec
     ExecStartPre=echo "Running OS setup..."
-    ExecStart=bash -c '{0}; echo "$?" > %I'
-    ExecStart=shutdown now
+    ExecStart=bash -c '{0}; echo "$?" > %I; shutdown now' &
     StandardOutput=tty
 
     [Install]

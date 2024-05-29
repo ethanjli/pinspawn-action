@@ -18,6 +18,10 @@ inputs:
   run:
     description: Commands to run in the shell.
     required: false
+  user:
+    description: The user to run commands as.
+    required: false
+    default: root
   boot:
     description: Boot the image's init program as PID 1.
     required: false
@@ -60,6 +64,7 @@ runs:
         INPUT_ARGS: ${{ inputs.args }}
         INPUT_SHELL: ${{ inputs.shell }}
         INPUT_RUN: ${{ inputs.run }}
+        INPUT_USER: ${{ inputs.user }}
         INPUT_BOOT: ${{ inputs.boot }}
         INPUT_RUN_SERVICE: ${{ inputs.run-service }}
       run: |
@@ -103,7 +108,7 @@ runs:
           fi
         fi
 
-        echo "Running pinspawn.sh \"$INPUT_IMAGE\" \"$boot_run_service\" \"$INPUT_ARGS\" \"$shell_command\"..."
+        echo "Running pinspawn.sh \"$INPUT_IMAGE\" \"$INPUT_USER\" \"$boot_run_service\" \"$INPUT_ARGS\" \"$shell_command\"..."
         echo "$INPUT_RUN" | \
           ${{ github.action_path }}/pinspawn.sh \
-          "$INPUT_IMAGE" "$boot_run_service" "$INPUT_ARGS" "$shell_command"
+          "$INPUT_IMAGE" "$INPUT_USER" "$boot_run_service" "$INPUT_ARGS" "$shell_command"

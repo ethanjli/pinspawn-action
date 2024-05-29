@@ -37,7 +37,7 @@ jobs:
           mode: to
           size: 8G
 
-      # Run shell commands
+      # Run shell commands as root
 
       - name: Install and run cowsay
         uses: ./
@@ -61,38 +61,50 @@ jobs:
             for word in reversed(['!', platform.python_version(), 'Python', 'in', 'running', 'am', 'I']):
               print(word, end=' ')
 
-      # Run shell commands as the pi user
+      # Run a shell with complicated quoting rules
 
-      - name: Run subshell without root permissions
+      - name: Run subshell with complicated quoting rules
         uses: ./
         with:
           image: rpi-os-image.img
           shell: >
-            su - pi -c "bash -e {0}"
+            sh -c "bash -c \"bash -c 'sh -c {0}'\""
           run: |
-            sudo apt-get update
-            sudo apt-get install -y figlet
-            figlet "I am $USER in $SHELL!"
+            /usr/games/cowsay "I am $USER!"
+
+      # Run shell commands as the pi user
 
       - name: Run script without root permissions
         uses: ./
         with:
           image: rpi-os-image.img
-          shell: su - pi {0}
+          user: pi
+          shell: sh
           run: |
-            #!/usr/bin/sh -e
             sudo apt-get update
             sudo apt-get install -y figlet
-            figlet "I am $USER in $SHELL!"
+            figlet -f bubble "I am $USER!"
 
-      # Run a specific command without a shell
+      # Run an external script directly, with the shell selected by the shebang line
 
-      - name: Print shell
+      - name: Make a script on the host
+        uses: 1arp/create-a-file-action@0.4.5
+        with:
+          file: figlet.sh
+          content: |
+            #!/usr/bin/env -S bash -eux
+            figlet -f digital "I am $USER in $SHELL!"
+
+      - name: Make the script executable
+        run: chmod a+x figlet.sh
+
+      - name: Run script directly
         uses: ./
         with:
           image: rpi-os-image.img
-          shell: >
-            echo "This variable won't be replaced because there's no shell: $SHELL"
+          args: --bind "$(pwd)":/run/external
+          user: pi
+          shell: /run/external/figlet.sh
 
       # Run shell commands with one or more bind mounts from the host OS
 
@@ -108,7 +120,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          args: --bind ./:/run/external
+          args: --bind "$(pwd)":/run/external
           run: |
             cat /run/external/boot-config.snippet >> /boot/config.txt
             cp /boot/config.txt /run/external/boot.config
@@ -122,10 +134,17 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          args: --bind ./:/run/external
+          args: --bind "$(pwd)":/run/external
           boot: true
           run: |
-            systemd-analyze blame
+            while ! systemd-analyze 2>/dev/null; do
+              systemctl list-jobs | cat
+              echo "Waiting for boot to finish..."
+              sleep 10
+            done
+            systemd-analyze
+            systemd-analyze critical-chain | cat
+            systemd-analyze blame | cat
             systemd-analyze plot > /run/external/bootup-timeline.svg
 
       - name: Upload the bootup timeline to Job Artifacts
@@ -135,11 +154,3 @@ jobs:
           path: bootup-timeline.svg
           if-no-files-found: error
           overwrite: true
-
-      - name: Fail during boot
-        uses: ./
-        with:
-          image: rpi-os-image.img
-          boot: true
-          run: |
-            exit 42
