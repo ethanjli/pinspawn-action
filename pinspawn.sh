@@ -124,6 +124,8 @@ if [ ! -z "$boot_run_service" ]; then
 
   # Inject into the container a service to run the shell script command and record its return value
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
+  sudo systemd-nspawn --directory "$sysroot" --quiet \
+    chown "$user" "${boot_tmp_result#"$sysroot"}"
   boot_tmp_service="$(\
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn.XXXXXXX \
   )"

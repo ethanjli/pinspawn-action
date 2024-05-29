@@ -183,7 +183,6 @@ Inputs:
     [Service]
     Type=exec
     ExecStart=bash -c "\
-      chown {user} {result}; \
       su - {user} -c '{command}; echo $? | tee {result}'; \
       echo Shutting down...; \
       shutdown now \
