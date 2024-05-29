@@ -54,7 +54,7 @@ tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 sudo tee "$tmp_script" > /dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
-sudo systemd-nspawn --directory "$sysroot" \
+sudo systemd-nspawn --directory "$sysroot" --quiet \
   chown "$user" "$container_tmp_script"
 shell_script_command="$(\
   printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
@@ -74,7 +74,7 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
   sudo cp "$tmp_script" "$boot_tmp_script"
   sudo chmod a+x "$boot_tmp_script"
-  sudo systemd-nspawn --directory "$sysroot" \
+  sudo systemd-nspawn --directory "$sysroot" --quiet \
     chown "$user" "${boot_tmp_script#"$sysroot"}"
 
   boot_tmp_service="$(\
@@ -98,7 +98,7 @@ if [ ! -z "$boot_run_service" ]; then
   instance_label="$(systemd-escape "${boot_tmp_result#"$sysroot"}")"
   boot_tmp_service_instance="${boot_tmp_service%'@.service'}@$instance_label.service"
   container_boot_tmp_service_instance="${boot_tmp_service_instance#"$sysroot/etc/systemd/system/"}"
-  sudo systemd-nspawn --directory "$sysroot" \
+  sudo systemd-nspawn --directory "$sysroot" --quiet \
     systemctl enable "$container_boot_tmp_service_instance"
 
   echo "Running container with boot..."
@@ -111,7 +111,7 @@ else
 fi
 
 if [ ! -z "$boot_run_service" ]; then
-  sudo systemd-nspawn --directory "$sysroot" \
+  sudo systemd-nspawn --directory "$sysroot" --quiet \
     systemctl disable "$container_boot_tmp_service_instance"
 
   if [ ! -f "$boot_tmp_result" ]; then
