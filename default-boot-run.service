@@ -5,7 +5,8 @@ After=getty.target
 [Service]
 Type=exec
 ExecStart=bash -x -c "\
-  su - {user} -c '{command}; echo $? | su - root -c \'tee {result}\''; \
+  chown {user} {result}; \
+  su - {user} -c '{command}; echo $? | tee {result}'; \
   echo Shutting down...; \
   shutdown now \
 " &
