@@ -100,8 +100,10 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn_status.XXXXXXX)"
 
   instance_label="$(systemd-escape "$boot_tmp_result")"
-  boot_tmp_service_instance="${boot_tmp_service%'@.service'}@$instance_label.service"
+  boot_tmp_service_instance="${boot_tmp_service%'@.service'}@$instance_label"
   container_boot_tmp_service_instance="${boot_tmp_service_instance#"$sysroot"}"
+  sudo systemd-nspawn --directory "$sysroot" \
+    cat "${boot_tmp_service#"$sysroot"}"
   sudo systemd-nspawn --directory "$sysroot" \
     systemctl enable "$container_boot_tmp_service_instance"
   echo "Running container with boot..."
