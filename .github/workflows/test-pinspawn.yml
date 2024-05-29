@@ -143,8 +143,8 @@ jobs:
               systemctl list-jobs | cat
             done
             systemd-analyze
-            systemd-analyze critical-chain
-            systemd-analyze blame
+            systemd-analyze critical-chain | cat
+            systemd-analyze blame | cat
             systemd-analyze plot > /run/external/bootup-timeline.svg
 
       - name: Upload the bootup timeline to Job Artifacts
