@@ -32,7 +32,7 @@ jobs:
         id: grow-image
         uses: ethanjli/pigrow-action@v0.1.0
         with:
-          image: /tmp/2024-03-15-raspios-bookworm-arm64-lite.img.xz
+          image: ${{ steps.download-base.outputs.destination }}
           destination: rpi-os-image.img
           mode: to
           size: 8G
