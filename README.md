@@ -177,7 +177,7 @@ Inputs:
     After=getty.target
 
     [Service]
-    type=oneshot
+    Type=oneshot
     ExecStartPre=echo "Running OS setup..."
     ExecStart=bash -c '{0}; echo "$?" > %I'
     ExecStart=shutdown now
