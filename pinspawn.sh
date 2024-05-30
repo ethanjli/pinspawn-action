@@ -166,7 +166,7 @@ if [ ! -z "$boot_run_service" ]; then
   # Check the return code of the shell script
   # Note: this is not needed in unbooted containers because errors there are propagated to the
   # caller of the script
-  if [ ! "$(sudo cat "$boot_tmp_result" > /dev/null)" ]; then
+  if ! sudo cat "$boot_tmp_result" > /dev/null; then
     echo "Error: $boot_run_service did not store a result indicating success/failure!"
     exit 1
   elif [ "$(sudo cat "$boot_tmp_result")" != "0" ]; then
