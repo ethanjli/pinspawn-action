@@ -115,16 +115,17 @@ Note: the system in the container will shut down after the specified commands fi
   uses: ethanjli/pinspawn-action@v0.1.1
   with:
     image: rpi-os-image.img
-    args: |
-      --bind "$(pwd)":/run/external
+    args: --bind "$(pwd)":/run/external
     boot: true
     run: |
-      echo "Waiting for boot to finish..."
-      systemctl is-system-running --wait
-      systemd-analyze
+      while ! systemd-analyze 2>/dev/null; do
+        echo "Waiting for boot to finish..."
+        sleep 5
+      done
       systemd-analyze critical-chain | cat
       systemd-analyze blame | cat
       systemd-analyze plot > /run/external/bootup-timeline.svg
+      echo "Done!"
 
 - name: Upload the bootup timeline to Job Artifacts
   uses: actions/upload-artifact@v4

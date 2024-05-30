@@ -30,7 +30,7 @@ jobs:
 
       - name: Grow the image
         id: grow-image
-        uses: ethanjli/pigrow-action@v0.1.0
+        uses: ethanjli/pigrow-action@v0.1.1
         with:
           image: ${{ steps.download-base.outputs.destination }}
           destination: rpi-os-image.img
