@@ -175,7 +175,7 @@ if [ ! -z "$boot_run_service" ]; then
   # errors which occur without this workaround
   export SYSTEMD_NSPAWN_UNIFIED_HIERARCHY=1
   # We use eval to work around word splitting in strings inside quotes in args:
-  eval "sudo systemd-nspawn --directory \"$sysroot\" $args"
+  eval "sudo --preserve-env=SYSTEMD_NSPAWN_UNIFIED_HIERARCHY systemd-nspawn --directory \"$sysroot\" $args"
 else
   # We can't boot if a non-root user is set, so we only set this flag for unbooted containers:
   if [ ! -z "$user" ]; then
