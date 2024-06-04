@@ -184,3 +184,14 @@ jobs:
             if [ "$USER" != "pi" ]; then
               exit 666
             fi
+
+      # Check cgroup version
+
+      - name: Run as user in booted container
+        uses: ./
+        with:
+          # Note: this test should be run on a bookworm image to exercise the required functionality
+          image: rpi-os-image.img
+          boot: true
+          run: |
+            mount | grep cgroup2
