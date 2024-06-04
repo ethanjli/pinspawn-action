@@ -54,8 +54,8 @@ runs:
         fi
         if [ ! -z "$(echo "$packages")" ]; then
           echo "Installing dependencies to run systemd-nspawn on non-amd64 images..."
-          sudo apt-get update
-          sudo apt-get install $packages
+          sudo apt-get update -o Dpkg::Progress-Fancy=0
+          sudo apt-get install -o Dpkg::Progress-Fancy=0 $packages
         fi
 
     - name: Run PiNspawn
