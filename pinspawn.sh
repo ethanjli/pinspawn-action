@@ -144,6 +144,39 @@ if [ ! -z "$boot_run_service" ]; then
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     systemctl enable "$container_boot_tmp_service"
 
+  # Ensure that default.target is not graphical.target
+  tmp_default_target="$(sudo mktemp --tmpdir="$sysroot/var/lib" piqemu-default-target.XXXXXXX)"
+  sudo systemd-nspawn --directory "$sysroot" --quiet \
+    bash -c "systemctl get-default | sudo tee \"${tmp_default_target#"$sysroot"}\" > /dev/null"
+  default_target="$(sudo cat "$tmp_default_target")"
+  sudo rm "$tmp_default_target"
+  if [ "$default_target" == "graphical.target" ]; then
+    sudo systemd-nspawn --directory "$sysroot" --quiet \
+      systemctl set-default multi-user.target
+  fi
+
+  # Mask userconfig.service
+  tmp_userconfig_enabled="$(sudo mktemp --tmpdir="$sysroot/var/lib" piqemu-userconfig-enabled.XXXXXXX)"
+  sudo systemd-nspawn --directory "$sysroot" --quiet \
+    bash -c "systemctl is-enabled userconfig.service | sudo tee \"${tmp_userconfig_enabled#"$sysroot"}\" > /dev/null || true"
+  userconfig_enabled="$(sudo cat "$tmp_userconfig_enabled")"
+  sudo rm "$tmp_userconfig_enabled"
+  if [[ "$userconfig_enabled" != "not-found" && "$userconfig_enabled" != masked* ]]; then
+    sudo systemd-nspawn --directory "$sysroot" --quiet \
+      systemctl mask userconfig.service
+  fi
+
+# Mask userconfig.service
+tmp_userconfig_enabled="$(sudo mktemp --tmpdir="$sysroot/var/lib" piqemu-userconfig-enabled.XXXXXXX)"
+sudo systemd-nspawn --directory "$sysroot" --quiet \
+  bash -c "systemctl is-enabled userconfig.service | sudo tee \"${tmp_userconfig_enabled#"$sysroot"}\" > /dev/null || true"
+userconfig_enabled="$(sudo cat "$tmp_userconfig_enabled")"
+sudo rm "$tmp_userconfig_enabled"
+if [[ "$userconfig_enabled" != "not-found" && "$userconfig_enabled" != masked* ]]; then
+  sudo systemd-nspawn --directory "$sysroot" --quiet \
+    systemctl mask userconfig.service
+fi
+
   echo "Running container with boot..."
   # We use eval to work around word splitting in strings inside quotes in args:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args"
@@ -158,6 +191,16 @@ else
 fi
 
 if [ ! -z "$boot_run_service" ]; then
+  # Restore the initial state of userconfig.service
+  if [[ "$userconfig_enabled" != "not-found" && "$userconfig_enabled" != masked* ]]; then
+    sudo systemd-nspawn --directory "$sysroot" --quiet \
+      systemctl unmask userconfig.service
+  fi
+
+  # Restore the initial state of default.target
+  sudo systemd-nspawn --directory "$sysroot" --quiet \
+    bash -c "systemctl set-default $default_target"
+
   # Clean up the injected service
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     systemctl disable "$container_boot_tmp_service"
