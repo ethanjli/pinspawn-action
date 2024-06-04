@@ -166,20 +166,16 @@ if [ ! -z "$boot_run_service" ]; then
       systemctl mask userconfig.service
   fi
 
-# Mask userconfig.service
-tmp_userconfig_enabled="$(sudo mktemp --tmpdir="$sysroot/var/lib" piqemu-userconfig-enabled.XXXXXXX)"
-sudo systemd-nspawn --directory "$sysroot" --quiet \
-  bash -c "systemctl is-enabled userconfig.service | sudo tee \"${tmp_userconfig_enabled#"$sysroot"}\" > /dev/null || true"
-userconfig_enabled="$(sudo cat "$tmp_userconfig_enabled")"
-sudo rm "$tmp_userconfig_enabled"
-if [[ "$userconfig_enabled" != "not-found" && "$userconfig_enabled" != masked* ]]; then
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
-    systemctl mask userconfig.service
-fi
-
   echo "Running container with boot..."
+  # Note: we force systemd to boot with cgroup v2 (needed for Docker to start), since systemd is
+  # unable to automatically detect cgroup v2 support in RPi OS bookworm for some reason. This should
+  # be fine on RPi OS images since bullseye supports cgroup v2 (and its support is correctly
+  # detected by systemd-nspawn), and we don't really care to support anything older than that.
+  # See https://github.com/NixOS/nixpkgs/issues/196413 for details on this workaround, and on the
+  # errors which occur without this workaround
+  export SYSTEMD_NSPAWN_UNIFIED_HIERARCHY=1
   # We use eval to work around word splitting in strings inside quotes in args:
-  eval "sudo systemd-nspawn --directory \"$sysroot\" $args"
+  eval "sudo --preserve-env=SYSTEMD_NSPAWN_UNIFIED_HIERARCHY systemd-nspawn --directory \"$sysroot\" $args"
 else
   # We can't boot if a non-root user is set, so we only set this flag for unbooted containers:
   if [ ! -z "$user" ]; then
