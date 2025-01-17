@@ -46,14 +46,14 @@ runs:
         if ! is_installed systemd-container; then
           packages="$packages systemd-container"
         fi
-        if ! is_installed qemu-user-static; then
-          packages="$packages qemu-user-static"
-        fi
-        if ! is_installed binfmt-support; then
-          packages="$packages binfmt-support"
-        fi
+        # if ! is_installed qemu-user-static; then
+        #   packages="$packages qemu-user-static"
+        # fi
+        # if ! is_installed binfmt-support; then
+        #   packages="$packages binfmt-support"
+        # fi
         if [ ! -z "$(echo "$packages")" ]; then
-          echo "Installing dependencies to run systemd-nspawn on non-amd64 images..."
+          echo "Installing dependencies to run systemd-nspawn..."
           sudo apt-get update -o Dpkg::Progress-Fancy=0
           sudo apt-get install -o Dpkg::Progress-Fancy=0 $packages
         fi
