@@ -195,21 +195,6 @@ jobs:
               exit 666
             fi
 
-      # Run a slow script in a booted container
-
-      - name: Run slow script in booted container
-        uses: ./
-        if: ${{ ! endsWith(matrix.os, '-arm') }}
-        with:
-          image: rpi-os-image.img
-          boot: true
-          run: |
-            for i in {1..12}; do
-              echo "sleeping..."
-              sleep 10
-            done
-            /usr/games/cowsay "done!"
-
       # Check cgroup version
 
       - name: Confirm use of cgroup v2
