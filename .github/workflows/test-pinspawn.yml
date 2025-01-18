@@ -151,6 +151,17 @@ jobs:
 
       # Run shell commands in a booted container
 
+      # Note: this is code to troubleshoot premature shutdown on arm64 runners
+      - name: Disable unnecessary services
+        uses: ./
+        # continue-on-error: true
+        with:
+          image: rpi-os-image.img
+          args: --bind "$(pwd)":/run/external
+          run: |
+            systemctl disable sshswitch.service
+            systemctl disable regenerate_ssh_host_keys.service
+
       - name: Analyze systemd boot process
         uses: ./
         # continue-on-error: true
