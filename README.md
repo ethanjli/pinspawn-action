@@ -176,9 +176,6 @@ or `ubuntu-24.04-arm`!
       /usr/bin/dockerd &
       sleep 10
 
-      # Note: GitHub's arm64 runner is armv8, but crane only has armv7 images; so we instead
-      # run the armv7 image.
-      export DOCKER_DEFAULT_PLATFORM=linux/arm/v7
       docker pull cgr.dev/chainguard/crane:latest
       docker images cgr.dev/chainguard/crane
       docker run --pull=never --rm cgr.dev/chainguard/crane:latest \
