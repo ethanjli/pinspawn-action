@@ -167,7 +167,7 @@ on `ubuntu-24.04-arm` results in an error when `dockerd` tries to start
       apt-get install -y \
         docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-- name: Run a Docker container image
+- name: Pull a Docker container image
   uses: ethanjli/pinspawn-action@v0.1.4
   with:
     image: rpi-os-image.img
@@ -180,8 +180,8 @@ on `ubuntu-24.04-arm` results in an error when `dockerd` tries to start
       /usr/bin/dockerd &
       sleep 10
 
-      docker run hello-world
-      docker images hello-world
+      docker image pull hello-world
+      docker image ls
 ```
 
 ## Usage Options
