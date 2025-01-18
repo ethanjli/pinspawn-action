@@ -9,10 +9,14 @@ name. It can also be used to boot the image's init program (which is usually sys
 action makes it easy to run a set of shell commands whether or not the OS is booted in the
 container.
 
-Note that you cannot start or interact with the Docker daemon inside a container booted with
-`systemd-nspawn`; instead, you should perform those operations inside a booted QEMU VM attached to
-your image, e.g. using the [`ethanjli/piqemu-action`](https://github.com/ethanjli/piqemu-action)
-GitHub action.
+Note that currently only unbooted containers work correctly on GitHub's new hosted arm64 runners;
+booted containers spontaneously initiate shutdown as soon as the system boot sequence reaches the
+login prompt. Maybe that's a bug which will magically go away after the hosted arm64 runners exit
+public preview (this is wishful thinking). For now, if you want to start or interact with the Docker
+daemon inside a container on an arm64 runner, you will need instantiate the container with the
+`CAP_NET_ADMIN` capability (to make iptables work) and then manually start both containerd (by
+launching `/usr/bin/containerd`) and the Docker daemon (by launching `/usr/bin/dockerd`). See the
+example listed below for an illustration of this.
 
 ## Basic Usage Examples
 
@@ -20,7 +24,7 @@ GitHub action.
 
 ```yaml
 - name: Install and run cowsay
-  uses: ethanjli/pinspawn-action@v0.1.3
+  uses: ethanjli/pinspawn-action@v0.1.4
   with:
     image: rpi-os-image.img
     run: |
@@ -33,7 +37,7 @@ GitHub action.
 
 ```yaml
 - name: Run in Python
-  uses: ethanjli/pinspawn-action@v0.1.3
+  uses: ethanjli/pinspawn-action@v0.1.4
   with:
     image: rpi-os-image.img
     shell: python
@@ -48,7 +52,7 @@ GitHub action.
 
 ```yaml
 - name: Run without root permissions
-  uses: ethanjli/pinspawn-action@v0.1.3
+  uses: ethanjli/pinspawn-action@v0.1.4
   with:
     image: rpi-os-image.img
     user: pi
@@ -74,7 +78,7 @@ GitHub action.
   run: chmod a+x figlet.sh
 
 - name: Run script directly
-  uses: ethanjli/pinspawn-action@v0.1.3
+  uses: ethanjli/pinspawn-action@v0.1.4
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
@@ -94,7 +98,7 @@ GitHub action.
       dtoverlay=i2c-rtc,rv3028,trickle-resistor-ohms=3000,backup-switchover-mode=1
 
 - name: Modify bootloader configuration
-  uses: ethanjli/pinspawn-action@v0.1.3
+  uses: ethanjli/pinspawn-action@v0.1.4
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
@@ -112,7 +116,7 @@ Note: the system in the container will shut down after the specified commands fi
 
 ```yaml
 - name: Analyze systemd boot process
-  uses: ethanjli/pinspawn-action@v0.1.3
+  uses: ethanjli/pinspawn-action@v0.1.4
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
@@ -134,6 +138,50 @@ Note: the system in the container will shut down after the specified commands fi
     path: bootup-timeline.svg
     if-no-files-found: error
     overwrite: true
+```
+
+### Interact with Docker in an unbooted container
+
+Note: this example will *only* work if you run it in the `ubuntu-22.04-arm` runner; trying to run it
+on `ubuntu-24.04-arm` results in an error when `dockerd` tries to start
+(`failed to start daemon: Devices cgroup isn't mounted`).
+
+```yaml
+- name: Install Docker
+  uses: ethanjli/pinspawn-action@v0.1.4
+  with:
+    image: rpi-os-image.img
+    run: |
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y ca-certificates curl
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+      echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+        https://download.docker.com/linux/debian \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+        > /etc/apt/sources.list.d/docker.list
+      apt-get update
+      apt-get install -y \
+        docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+- name: Pull a Docker container image
+  uses: ethanjli/pinspawn-action@v0.1.4
+  with:
+    image: rpi-os-image.img
+    args: --capability=CAP_NET_ADMIN
+    run: |
+      #!/bin/bash -eux
+
+      /usr/bin/containerd &
+      sleep 5
+      /usr/bin/dockerd &
+      sleep 10
+
+      docker image pull hello-world
+      docker image ls
 ```
 
 ## Usage Options
