@@ -255,6 +255,8 @@ jobs:
           run: |
             #!/bin/bash -eux
 
+            docker manifest inspect cgr.dev/chainguard/crane:latest
+
             /usr/bin/containerd &
             /usr/bin/dockerd &
             sleep 10
