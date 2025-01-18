@@ -157,7 +157,7 @@ jobs:
 
       - name: Analyze systemd boot process
         uses: ./
-        if: ${{ endsWith(matrix.os, '-arm') }}
+        if: ${{ ! endsWith(matrix.os, '-arm') }}
         with:
           image: rpi-os-image.img
           args: --bind "$(pwd)":/run/external
@@ -174,7 +174,7 @@ jobs:
 
       - name: Upload the bootup timeline to Job Artifacts
         uses: actions/upload-artifact@v4
-        if: ${{ endsWith(matrix.os, '-arm') }}
+        if: ${{ ! endsWith(matrix.os, '-arm') }}
         with:
           name: bootup-timeline
           path: bootup-timeline.svg
@@ -199,7 +199,7 @@ jobs:
 
       - name: Run slow script in booted container
         uses: ./
-        if: ${{ endsWith(matrix.os, '-arm') }}
+        if: ${{ ! endsWith(matrix.os, '-arm') }}
         with:
           image: rpi-os-image.img
           boot: true
