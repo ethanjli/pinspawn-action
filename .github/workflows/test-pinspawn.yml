@@ -172,9 +172,10 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
+          boot: true
           run: |
             #/usr/bin/env bash -x
-            journalctl --boot=-1
+            journalctl -b-1 --no-pager
 
       - name: Upload the bootup timeline to Job Artifacts
         uses: actions/upload-artifact@v4
