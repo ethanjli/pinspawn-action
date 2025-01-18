@@ -172,7 +172,10 @@ or `ubuntu-24.04-arm`!
     image: rpi-os-image.img
     args: --capability=CAP_NET_ADMIN
     run: |
+      #!/bin/bash -eux
+
       /usr/bin/containerd &
+      sleep 5
       /usr/bin/dockerd &
       sleep 10
 

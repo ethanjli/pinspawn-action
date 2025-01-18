@@ -148,7 +148,7 @@ jobs:
       - name: Upload the bootup timeline to Job Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: installed-packages
+          name: installed-packages-${{ matrix.os }}
           path: installed-packages.txt
           if-no-files-found: error
           overwrite: true
@@ -176,7 +176,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ ! endsWith(matrix.os, '-arm') }}
         with:
-          name: bootup-timeline
+          name: bootup-timeline-${{ matrix.os }}
           path: bootup-timeline.svg
           if-no-files-found: error
           overwrite: true
@@ -253,7 +253,10 @@ jobs:
           image: rpi-os-image.img
           args: --capability=CAP_NET_ADMIN
           run: |
+            #!/bin/bash -eux
+
             /usr/bin/containerd &
+            sleep 5
             /usr/bin/dockerd &
             sleep 10
 
