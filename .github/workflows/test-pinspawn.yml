@@ -161,7 +161,8 @@ jobs:
           run: |
             while ! systemd-analyze 2>/dev/null; do
               echo "Waiting for boot to finish..."
-              sleep 5
+              systemctl list-jobs
+              sleep 1
             done
             systemd-analyze critical-chain | cat
             systemd-analyze blame | cat
@@ -175,7 +176,6 @@ jobs:
           boot: true
           run: |
             #/usr/bin/env bash -x
-            last -x
             journalctl -b-1 --no-pager
 
       - name: Upload the bootup timeline to Job Artifacts
