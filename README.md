@@ -142,8 +142,9 @@ Note: the system in the container will shut down after the specified commands fi
 
 ### Interact with Docker in an unbooted container
 
-Note: this example will *only* work if you run it in an arm64-based runner, e.g. `ubuntu-22.04-arm`
-or `ubuntu-24.04-arm`!
+Note: this example will *only* work if you run it in the `ubuntu-22.04-arm` runner; trying to run it
+on `ubuntu-24.04-arm` results in an error when `dockerd` tries to start
+(`failed to start daemon: Devices cgroup isn't mounted`).
 
 ```yaml
 - name: Install Docker
@@ -166,7 +167,7 @@ or `ubuntu-24.04-arm`!
       apt-get install -y \
         docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-- name: Pull and run a Docker container
+- name: Inspect a Docker container image
   uses: ethanjli/pinspawn-action@v0.1.4
   with:
     image: rpi-os-image.img
@@ -179,10 +180,7 @@ or `ubuntu-24.04-arm`!
       /usr/bin/dockerd &
       sleep 10
 
-      docker pull cgr.dev/chainguard/crane:latest
-      docker images cgr.dev/chainguard/crane
-      docker run --pull=never --rm cgr.dev/chainguard/crane:latest \
-        manifest cgr.dev/chainguard/crane:latest --platform=linux/amd64
+      docker manifest inspect cgr.dev/chainguard/crane:latest
 ```
 
 ## Usage Options
