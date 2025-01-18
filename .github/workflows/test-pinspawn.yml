@@ -175,6 +175,8 @@ jobs:
           boot: true
           run: |
             #/usr/bin/env bash -x
+            last -x
+            cat /var/log/auth.log
             journalctl -b-1 --no-pager
 
       - name: Upload the bootup timeline to Job Artifacts
