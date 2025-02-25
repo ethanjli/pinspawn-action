@@ -19,7 +19,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm]
+        os:
+          - ubuntu-22.04
+          - ubuntu-24.04
+          - ubuntu-22.04-arm
+          - ubuntu-24.04-arm
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -29,8 +33,8 @@ jobs:
         id: download-base
         uses: ethanjli/cached-download-action@v0.1.1
         with:
-          url: https://downloads.raspberrypi.com/raspios_lite_armhf/images/raspios_lite_armhf-2024-11-19/2024-11-19-raspios-bookworm-armhf-lite.img.xz
-          destination: /tmp/2024-11-19-raspios-bookworm-armhf-lite.img.xz
+          url: https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-11-19/2024-11-19-raspios-bookworm-arm64-lite.img.xz
+          destination: /tmp/2024-11-19-raspios-bookworm-arm64-lite.img.xz
 
       - name: Grow the image
         id: grow-image
@@ -144,7 +148,7 @@ jobs:
       - name: Upload the bootup timeline to Job Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: installed-packages
+          name: installed-packages-${{ matrix.os }}
           path: installed-packages.txt
           if-no-files-found: error
           overwrite: true
@@ -191,8 +195,9 @@ jobs:
 
       - name: Upload the bootup timeline to Job Artifacts
         uses: actions/upload-artifact@v4
+        if: ${{ ! endsWith(matrix.os, '-arm') }}
         with:
-          name: bootup-timeline
+          name: bootup-timeline-${{ matrix.os }}
           path: bootup-timeline.svg
           if-no-files-found: error
           overwrite: true
@@ -211,20 +216,6 @@ jobs:
               exit 666
             fi
 
-      # Run a slow script in a booted container
-
-      - name: Run slow script in booted container
-        uses: ./
-        with:
-          image: rpi-os-image.img
-          boot: true
-          run: |
-            for i in {1..12}; do
-              echo "sleeping..."
-              sleep 10
-            done
-            /usr/games/cowsay "done!"
-
       # Check cgroup version
 
       - name: Confirm use of cgroup v2
@@ -237,3 +228,42 @@ jobs:
             #!/bin/sh -e
             echo "cgroup v2 mount:"
             mount | grep cgroup2
+
+      # Interact with Docker in an unbooted container
+
+      - name: Install Docker
+        uses: ./
+        if: ${{ endsWith(matrix.os, '24.04-arm') }}
+        with:
+          image: rpi-os-image.img
+          run: |
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y ca-certificates curl
+            install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+            chmod a+r /etc/apt/keyrings/docker.asc
+            echo \
+              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+              https://download.docker.com/linux/debian \
+              $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+              > /etc/apt/sources.list.d/docker.list
+            apt-get update
+            apt-get install -y \
+              docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+      - name: Pull a Docker container image
+        uses: ./
+        if: ${{ endsWith(matrix.os, '24.04-arm') }}
+        with:
+          image: rpi-os-image.img
+          args: --capability=CAP_NET_ADMIN
+          run: |
+            #!/bin/bash -eux
+
+            /usr/bin/containerd &
+            /usr/bin/dockerd &
+            sleep 10
+
+            docker image pull hello-world
+            docker image ls
