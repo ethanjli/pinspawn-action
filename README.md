@@ -278,7 +278,10 @@ You may also be able to run the `gha-wrapper-pinspawn.sh` script on your own com
 have to figure out how to install the required dependencies yourself - take a look at
 [action.yml](./action.yml) to see what extra apt packages get installed on top of the GitHub Actions
 runner's default set of packages, and to see how you can pass inputs to the
-`gha-wrapper-pinspawn.sh` script as environment variables.
+[gha-wrapper-pinspawn.sh](./gha-wrapper-pinspawn.sh) script as environment variables. Or, if you
+really can't tolerate using environment variables, you can instead directly invoke
+[pinspawn.sh](./pinspawn.sh) - look at the contents of `gha-wrapper-pinspawn.sh` to see how to do
+so.
 
 ## Alternatives
 
