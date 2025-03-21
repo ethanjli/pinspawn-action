@@ -65,9 +65,9 @@ mechanism which is more powerful (and more similar to actually-booted Raspberry 
 than chroots. `ethanjli/pinspawn-action` is designed specifically as an ergonomic wrapper for GitHub
 Actions to use systemd-nspawn with Raspberry Pi OS images. You may also be able to run the
 `gha-wrapper-pinspawn.sh` script on your own computer, but you will have to figure out how to
-install the required dependencies yourself - take a look at the `action.yml` file to see what extra
-apt packages get installed on top of the GitHub Actions runner's default set of packages, and to see
-how you can pass inputs to the `gha-wrapper-pinspawn.sh` script as environment variables.
+install the required dependencies yourself - take a look at [action.yml](./action.yml) to see what
+extra apt packages get installed on top of the GitHub Actions runner's default set of packages, and
+to see how you can pass inputs to the `gha-wrapper-pinspawn.sh` script as environment variables.
 
 ## Basic Usage Examples
 
