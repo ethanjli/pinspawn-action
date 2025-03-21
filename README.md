@@ -23,51 +23,16 @@ how to do this.
 
 ## Motivation
 
-I'm aware of a variety of existing approaches for generating custom Raspberry Pi OS images in GitHub
-Actions CI for building a custom OS which is meant to be maintained (i.e. changed) over time. The
-following are all built as abstractions **away** from pure shell-scripting and, with the exception
-of sdm, are based on pure chroots (which come with various limitations, some of which may affect
-your work depending on your goals):
+Unlike the [alternatives](#alternatives) listed below (which you should evaluate based on your own
+project's requirements to see which ones might be more appropriate for you),
+`ethanjli/pinspawn-action` attempts to provide a bare-minimum abstraction which gets you **closer**
+to shell scripting - it tries to minimize the amount of tool-specific abstraction for you to learn,
+and the only thing you can do with it is to run your own shell commands/scripts.
 
-- [Nature40/pimod](https://github.com/Nature40/pimod): a great option to consider if you want to use
-  [Dockerfile](https://docs.docker.com/build/concepts/dockerfile/)-style syntax. Ready-to-use as a
-  GitHub Action! If you want to interact with Docker, you will need to use some advanced
-  Docker-in-Docker magic - see
-  [here](https://github.com/PlanktoScope/PlanktoScope/issues/42#issuecomment-2132049469) for
-  details.
-- [usimd/pi-gen-action](https://github.com/usimd/pi-gen-action) with
-  [RPi-Distro/pi-gen](https://github.com/RPi-Distro/pi-gen): a good option to consider if you want
-  to build OS images using the same
-  ([rather-complicated](https://opensource.com/article/21/7/custom-raspberry-pi-image)) abstraction
-  system that is used for building the Raspberry Pi OS, e.g. for multi-stage builds.
-- [guysoft/CustomPiOS](https://github.com/guysoft/CustomPiOS): a system of build scripts organized
-  around pre-defined modules which you can combine with your own scripts. A good option to consider
-  if you want to use some of the modules they provide in your own OS image, or if you also want to
-  build images locally (e.g. in a Docker container, apparently?).
-- [gitbls/sdm](https://github.com/gitbls/sdm): a system of build scripts organized around
-  pre-defined plugins which you can combine with your own scripts. Has many more plugins for you to
-  search through compared to CustomPiOS, and also has enough functionality to replace Raspberry Pi
-  Imager. Can work on chroots, but defaults to using systemd-nspawn instead. You may need to figure
-  out GitHub Actions integration yourself.
-- [pndurette/pi-packer](https://github.com/pndurette/pi-packer): potentially reasonable if you know
-  (or would be comfortable learning) [Packer](https://www.packer.io/) and
-  [Packer HCL](https://developer.hashicorp.com/packer/docs/templates/hcl_templates). You may need to
-  figure out GitHub Actions integration yourself.
-- [raspberrypi/rpi-image-gen](https://github.com/raspberrypi/rpi-image-gen): Raspberry Pi's new
-  framework for building custom images, if you want to learn their unique YAML-based configuration
-  system. You may need to figure out GitHub Actions integration yourself.
-
-By contrast, `ethanjli/pinspawn-action` attempts to provide a bare-minimum abstraction which gets
-you **closer** to shell scripting - it tries to minimize the amount of tool-specific abstraction for
-you to learn, and the only thing you can do with it is to run your own shell commands/scripts.
-Also, by contrast to everything listed above except sdm, pinspawn-action takes advantage of a
-mechanism which is more powerful (and more similar to actually-booted Raspberry Pi environments)
-than chroots. `ethanjli/pinspawn-action` is designed specifically as an ergonomic wrapper for GitHub
-Actions to use systemd-nspawn with Raspberry Pi OS images. You may also be able to run the
-`gha-wrapper-pinspawn.sh` script on your own computer, but you will have to figure out how to
-install the required dependencies yourself - take a look at [action.yml](./action.yml) to see what
-extra apt packages get installed on top of the GitHub Actions runner's default set of packages, and
-to see how you can pass inputs to the `gha-wrapper-pinspawn.sh` script as environment variables.
+Also, by contrast to every below-listed alternative besides sdm, pinspawn-action takes advantage of
+a mechanism which is more powerful (and more similar to actually-booted Raspberry Pi environments)
+than chroots. pinspawn-action is designed specifically as an ergonomic wrapper for GitHub Actions
+to use systemd-nspawn with Raspberry Pi OS images. 
 
 ## Basic Usage Examples
 
@@ -306,3 +271,85 @@ Inputs:
   - If this flag is enabled, then any arguments specified as the command line in `args` are used as
     arguments for the init program, i.e. `systemd-nspawn` will be invoked like
     `systemd-nspawn --boot {args}`.
+
+## Running Locally
+
+You may also be able to run the `gha-wrapper-pinspawn.sh` script on your own computer, but you will
+have to figure out how to install the required dependencies yourself - take a look at
+[action.yml](./action.yml) to see what extra apt packages get installed on top of the GitHub Actions
+runner's default set of packages, and to see how you can pass inputs to the
+`gha-wrapper-pinspawn.sh` script as environment variables.
+
+## Alternatives
+
+I'm aware of a variety of existing approaches for generating custom Raspberry Pi OS images in GitHub
+Actions CI for building a custom OS which is meant to be maintained (i.e. changed) over time. The
+following are all built as abstractions **away** from pure shell-scripting and, with the exception
+of sdm, are based on pure chroots (which come with various limitations, some of which may affect
+your work depending on your goals):
+
+- [Nature40/pimod](https://github.com/Nature40/pimod): a great option to consider if you want to use
+  [Dockerfile](https://docs.docker.com/build/concepts/dockerfile/)-style syntax. Ready-to-use as a
+  GitHub Action! If you want to interact with Docker, you will need to use some advanced
+  Docker-in-Docker magic - see
+  [here](https://github.com/PlanktoScope/PlanktoScope/issues/42#issuecomment-2132049469) for
+  details.
+- [usimd/pi-gen-action](https://github.com/usimd/pi-gen-action) with
+  [RPi-Distro/pi-gen](https://github.com/RPi-Distro/pi-gen): a good option to consider if you want
+  to build OS images using the same
+  ([rather-complicated](https://opensource.com/article/21/7/custom-raspberry-pi-image)) abstraction
+  system that is used for building the Raspberry Pi OS, e.g. for multi-stage builds.
+- [guysoft/CustomPiOS](https://github.com/guysoft/CustomPiOS): a system of build scripts organized
+  around pre-defined modules which you can combine with your own scripts. A good option to consider
+  if you want to use some of the modules they provide in your own OS image, or if you also want to
+  build images locally (e.g. in a Docker container, apparently?).
+- [gitbls/sdm](https://github.com/gitbls/sdm): a system of build scripts organized around
+  pre-defined plugins which you can combine with your own scripts. Has many more plugins for you to
+  search through compared to CustomPiOS, and also has enough functionality to replace Raspberry Pi
+  Imager. Can work on chroots, but defaults to using systemd-nspawn instead. You may need to figure
+  out GitHub Actions integration yourself.
+- [pndurette/pi-packer](https://github.com/pndurette/pi-packer): potentially reasonable if you know
+  (or would be comfortable learning) [Packer](https://www.packer.io/) and
+  [Packer HCL](https://developer.hashicorp.com/packer/docs/templates/hcl_templates). You may need to
+  figure out GitHub Actions integration yourself.
+- [raspberrypi/rpi-image-gen](https://github.com/raspberrypi/rpi-image-gen): Raspberry Pi's new
+  framework for building custom images, if you want to learn their unique YAML-based configuration
+  system. You may need to figure out GitHub Actions integration yourself.
+
+If you absolutely need to run shell commands/scripts in a booted QEMU virtual machine with full
+virtualization of Raspberry Pi hardware, I have created
+[ethanjli/piqemu-action](https://github.com/ethanjli/piqemu-action) with basically the same
+interface as pinspawn-action. However, I found in GitHub Actions runners that Raspberry Pi QEMU VMs
+are quite slow (especially for downloading files over the network) and flaky (in the sense that they
+will just freeze in the middle of work without a helpful error message, requiring you to restart the
+workflow to make it work - which is definitely a some kind of bug). I strongly recommend using
+pinspawn-action instead of piqemu-action unless you have something which absolutely won't work
+outside a full virtual machine.
+
+## Licensing
+
+We have chosen the following licenses in order to give away our work for free, so that you can
+freely use it for whatever purposes you have, with minimal restrictions, while still protecting our
+disclaimer that this work is provided without any warranties at all. If you're using this project,
+or if you have questions about the licenses, we'd love to hear from you - please start a new
+discussion thread in the "Discussions" tab of this repository on Github or email us at
+<lietk12@gmail.com> .
+
+### Software
+
+Except where otherwise indicated, source code provided here is covered by the following information:
+
+**Copyright Ethan Li and pinspawn-action contributors**
+
+SPDX-License-Identifier: `Apache-2.0 OR BlueOak-1.0.0`
+
+Software files in this repository are released under the
+[Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0) and the
+[Blue Oak Model License 1.0.0](https://blueoakcouncil.org/license/1.0.0);
+you can use the source code provided here either under the Apache License or under the
+Blue Oak Model License, and you get to decide which license you will agree to.
+We are making the software available under the Apache license because it's
+[OSI-approved](https://writing.kemitchell.com/2019/05/05/Rely-on-OSI.html),
+but we like the Blue Oak Model License more because it's easier to read and understand.
+Please read and understand the licenses for the specific language governing permissions and
+limitations.
