@@ -62,7 +62,12 @@ you **closer** to shell scripting - it tries to minimize the amount of tool-spec
 you to learn, and the only thing you can do with it is to run your own shell commands/scripts.
 Also, by contrast to everything listed above except sdm, pinspawn-action takes advantage of a
 mechanism which is more powerful (and more similar to actually-booted Raspberry Pi environments)
-than chroots.
+than chroots. `ethanjli/pinspawn-action` is designed specifically as an ergonomic wrapper for GitHub
+Actions to use systemd-nspawn with Raspberry Pi OS images. You may also be able to run the
+`gha-wrapper-pinspawn.sh` script on your own computer, but you will have to figure out how to
+install the required dependencies yourself - take a look at the `action.yml` file to see what extra
+apt packages get installed on top of the GitHub Actions runner's default set of packages, and to see
+how you can pass inputs to the `gha-wrapper-pinspawn.sh` script as environment variables.
 
 ## Basic Usage Examples
 
@@ -234,15 +239,15 @@ trying to run it on `ubuntu-22.04-arm` results in an error when `dockerd` tries 
 
 Inputs:
 
-| Input         | Allowed values                   | Required?            | Description                                                  |
-|---------------|----------------------------------|----------------------|--------------------------------------------------------------|
-| `image`       | file path                        | yes                  | Path of the image to use for the container.                  |
-| `args`        | `systemd-nspawn` options/args    | no (default ``)      | Options, args, and/or a command to pass to `systemd-nspawn`. |
-| `shell`       | ``, `bash`, `sh`, `python`, etc. | no (default ``)      | The shell to use for running commands.                       |
-| `run`         | shell commands                   | no (default ``)      | Commands to run in the shell.                                |
-| `user`        | name of user in image            | no (default `root`)  | The user to run commands as.                                 |
-| `boot`        | `false`, `true`                  | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.    |
-| `run-service` | file path                        | no (default ``)      | systemd service to run `shell` with the `run` commands.      |
+| Input         | Allowed values                   | Required?            | Description                                                                               |
+|---------------|----------------------------------|----------------------|-------------------------------------------------------------------------------------------|
+| `image`       | file path                        | yes                  | Path of the image to use for the container.                                               |
+| `args`        | `systemd-nspawn` options/args    | no (default ``)      | Options, args, and/or a command to pass to `systemd-nspawn`.                              |
+| `shell`       | ``, `bash`, `sh`, `python`, etc. | no (default ``)      | The shell to use for running commands.                                                    |
+| `run`         | shell commands                   | no (default ``)      | Commands to run in the shell.                                                             |
+| `user`        | name of user in image            | no (default `root`)  | The user to run commands as.                                                              |
+| `boot`        | `false`, `true`                  | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.                                 |
+| `run-service` | file path                        | no (default ``)      | systemd service to run `shell` with the `run` commands; only used with booted containers. |
 
 - `image` must be the path of an unmounted raw disk image (such as a Raspberry Pi OS SD card image),
   where partition 2 should be mounted as the root filesystem (i.e. `/`) and partition 1 should be
