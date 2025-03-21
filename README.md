@@ -13,18 +13,21 @@ process in GitHub Actions!
 Note that currently only unbooted containers work correctly on GitHub's new hosted arm64 runners;
 booted systemd-nspawn containers spontaneously initiate shutdown as soon as the system boot sequence
 reaches the login prompt. Maybe that's a bug which will magically go away after the hosted arm64
-runners exit public preview (this is wishful thinking). For now, if you want to start or interact
-with the Docker daemon inside a container on an arm64 runner, you will need instantiate the
-container with the `CAP_NET_ADMIN` capability (to make iptables work) and then manually start both
-containerd (by launching `/usr/bin/containerd`) and the Docker daemon (by launching
-`/usr/bin/dockerd`). See the example listed below for an illustration of this.
+runners exit public preview (this is wishful thinking). If you want to start or interact with the
+Docker daemon inside an unbooted container on an arm64 runner, you will need instantiate the
+container with the `CAP_NET_ADMIN` capability (to make iptables work as required by Docker) and then
+manually start both containerd (by launching `/usr/bin/containerd` as a background process) and the
+Docker daemon (by launching `/usr/bin/dockerd` as a background process). See
+[the relevant example](#interact-with-docker-in-an-unbooted-container) below for an illustration of
+how to do this.
 
 ## Motivation
 
 I'm aware of a variety of existing approaches for generating custom Raspberry Pi OS images in GitHub
 Actions CI for building a custom OS which is meant to be maintained (i.e. changed) over time. The
-following are all built as abstractions away from pure shell-scripting and generally based on pure
-chroots:
+following are all built as abstractions **away** from pure shell-scripting and, with the exception
+of sdm, are based on pure chroots (which come with various limitations, some of which may affect
+your work depending on your goals):
 
 - [Nature40/pimod](https://github.com/Nature40/pimod): a great option to consider if you want to use
   [Dockerfile](https://docs.docker.com/build/concepts/dockerfile/)-style syntax. Ready-to-use as a
@@ -42,7 +45,7 @@ chroots:
   if you want to use some of the modules they provide in your own OS image, or if you also want to
   build images locally (e.g. in a Docker container, apparently?).
 - [gitbls/sdm](https://github.com/gitbls/sdm): a system of build scripts organized around
-  pre-defined plugins which you can combine with your own scripts. Has more plugins for you to
+  pre-defined plugins which you can combine with your own scripts. Has many more plugins for you to
   search through compared to CustomPiOS, and also has enough functionality to replace Raspberry Pi
   Imager. Can work on chroots, but defaults to using systemd-nspawn instead. You may need to figure
   out GitHub Actions integration yourself.
@@ -57,7 +60,7 @@ chroots:
 By contrast, `ethanjli/pinspawn-action` attempts to provide a bare-minimum abstraction which gets
 you **closer** to shell scripting - it tries to minimize the amount of tool-specific abstraction for
 you to learn, and the only thing you can do with it is to run your own shell commands/scripts.
-Also, by contrast to everything listed above except sdm, pinspawn-action is takes advantage of a
+Also, by contrast to everything listed above except sdm, pinspawn-action takes advantage of a
 mechanism which is more powerful (and more similar to actually-booted Raspberry Pi environments)
 than chroots.
 
