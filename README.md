@@ -142,8 +142,8 @@ Note: the system in the container will shut down after the specified commands fi
 
 ### Interact with Docker in an unbooted container
 
-Note: this example will *only* work if you run it in the `ubuntu-22.04-arm` runner; trying to run it
-on `ubuntu-24.04-arm` results in an error when `dockerd` tries to start
+Note: this example will *only* work if you run it in the `ubuntu-24.04-arm` runner; trying to run it
+on `ubuntu-22.04-arm` results in an error when `dockerd` tries to start
 (`failed to start daemon: Devices cgroup isn't mounted`).
 
 ```yaml
