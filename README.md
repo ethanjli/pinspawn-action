@@ -7,16 +7,59 @@ used to run commands in a light-weight namespace container, like chroot but with
 of the file system hierarchy, the process tree, the various IPC subsystems, and the host and domain
 name. It can also be used to boot the image's init program (which is usually systemd) as an OS; this
 action makes it easy to run a set of shell commands whether or not the OS is booted in the
-container.
+container. You can use this action to set up Docker containers as part of your OS image build
+process in GitHub Actions!
 
 Note that currently only unbooted containers work correctly on GitHub's new hosted arm64 runners;
-booted containers spontaneously initiate shutdown as soon as the system boot sequence reaches the
-login prompt. Maybe that's a bug which will magically go away after the hosted arm64 runners exit
-public preview (this is wishful thinking). For now, if you want to start or interact with the Docker
-daemon inside a container on an arm64 runner, you will need instantiate the container with the
-`CAP_NET_ADMIN` capability (to make iptables work) and then manually start both containerd (by
-launching `/usr/bin/containerd`) and the Docker daemon (by launching `/usr/bin/dockerd`). See the
-example listed below for an illustration of this.
+booted systemd-nspawn containers spontaneously initiate shutdown as soon as the system boot sequence
+reaches the login prompt. Maybe that's a bug which will magically go away after the hosted arm64
+runners exit public preview (this is wishful thinking). For now, if you want to start or interact
+with the Docker daemon inside a container on an arm64 runner, you will need instantiate the
+container with the `CAP_NET_ADMIN` capability (to make iptables work) and then manually start both
+containerd (by launching `/usr/bin/containerd`) and the Docker daemon (by launching
+`/usr/bin/dockerd`). See the example listed below for an illustration of this.
+
+## Motivation
+
+I'm aware of a variety of existing approaches for generating custom Raspberry Pi OS images in GitHub
+Actions CI for building a custom OS which is meant to be maintained (i.e. changed) over time. The
+following are all built as abstractions away from pure shell-scripting and generally based on pure
+chroots:
+
+- [Nature40/pimod](https://github.com/Nature40/pimod): a great option to consider if you want to use
+  [Dockerfile](https://docs.docker.com/build/concepts/dockerfile/)-style syntax. Ready-to-use as a
+  GitHub Action! If you want to interact with Docker, you will need to use some advanced
+  Docker-in-Docker magic - see
+  [here](https://github.com/PlanktoScope/PlanktoScope/issues/42#issuecomment-2132049469) for
+  details.
+- [usimd/pi-gen-action](https://github.com/usimd/pi-gen-action) with
+  [RPi-Distro/pi-gen](https://github.com/RPi-Distro/pi-gen): a good option to consider if you want
+  to build OS images using the same
+  ([rather-complicated](https://opensource.com/article/21/7/custom-raspberry-pi-image)) abstraction
+  system that is used for building the Raspberry Pi OS, e.g. for multi-stage builds.
+- [guysoft/CustomPiOS](https://github.com/guysoft/CustomPiOS): a system of build scripts organized
+  around pre-defined modules which you can combine with your own scripts. A good option to consider
+  if you want to use some of the modules they provide in your own OS image, or if you also want to
+  build images locally (e.g. in a Docker container, apparently?).
+- [gitbls/sdm](https://github.com/gitbls/sdm): a system of build scripts organized around
+  pre-defined plugins which you can combine with your own scripts. Has more plugins for you to
+  search through compared to CustomPiOS, and also has enough functionality to replace Raspberry Pi
+  Imager. Can work on chroots, but defaults to using systemd-nspawn instead. You may need to figure
+  out GitHub Actions integration yourself.
+- [pndurette/pi-packer](https://github.com/pndurette/pi-packer): potentially reasonable if you know
+  (or would be comfortable learning) [Packer](https://www.packer.io/) and
+  [Packer HCL](https://developer.hashicorp.com/packer/docs/templates/hcl_templates). You may need to
+  figure out GitHub Actions integration yourself.
+- [raspberrypi/rpi-image-gen](https://github.com/raspberrypi/rpi-image-gen): Raspberry Pi's new
+  framework for building custom images, if you want to learn their unique YAML-based configuration
+  system. You may need to figure out GitHub Actions integration yourself.
+
+By contrast, `ethanjli/pinspawn-action` attempts to provide a bare-minimum abstraction which gets
+you **closer** to shell scripting - it tries to minimize the amount of tool-specific abstraction for
+you to learn, and the only thing you can do with it is to run your own shell commands/scripts.
+Also, by contrast to everything listed above except sdm, pinspawn-action is takes advantage of a
+mechanism which is more powerful (and more similar to actually-booted Raspberry Pi environments)
+than chroots.
 
 ## Basic Usage Examples
 
@@ -142,8 +185,8 @@ Note: the system in the container will shut down after the specified commands fi
 
 ### Interact with Docker in an unbooted container
 
-Note: this example will *only* work if you run it in the `ubuntu-24.04-arm` runner; trying to run it
-on `ubuntu-22.04-arm` results in an error when `dockerd` tries to start
+Note: this example will *only* work if you run it in the `ubuntu-24.04-arm` GitHub Actions runner;
+trying to run it on `ubuntu-22.04-arm` results in an error when `dockerd` tries to start
 (`failed to start daemon: Devices cgroup isn't mounted`).
 
 ```yaml
