@@ -43,11 +43,11 @@ if [ "$INPUT_BOOT" == "true" ]; then
 fi
 
 if [ "$INPUT_BOOT_PARTITION_MOUNT" == "" ]; then
-  echo "::warning title=Future change to default parameter value::In the future, the \
-    pinspawn-action's boot-partition-mount parameter's default value will change from /boot to \
-    /boot/firmware (in accordance with RPi OS bookworm's change in the default mountpoint of the \
-    boot partition). To suppress this warning, you can manually specify the boot-partition-mount \
-    parameter's value as /boot."
+  echo "::warning title=Future change to default parameter value::In the future, the" \
+    "pinspawn-action's boot-partition-mount parameter's default value will change from /boot to" \
+    "/boot/firmware (in accordance with RPi OS bookworm's change in the default mountpoint of the" \
+    "boot partition). To suppress this warning, you can manually specify the boot-partition-mount" \
+    "parameter's value as /boot."
   INPUT_BOOT_PARTITION_MOUNT="/boot"
 fi
 

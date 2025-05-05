@@ -51,6 +51,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           run: |
             apt-get update
             apt-get install -y cowsay
@@ -62,6 +63,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           shell: python
           run: |
             import platform
@@ -75,6 +77,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           shell: >
             sh -c "bash -c \"bash -c 'sh -c {0}'\""
           run: |
@@ -86,6 +89,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           user: pi
           shell: sh
           run: |
@@ -110,6 +114,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           args: --bind "$(pwd)":/run/external
           user: pi
           shell: /run/external/figlet.sh
@@ -128,8 +133,8 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          args: --bind "$(pwd)":/run/external
           #boot-partition-mount: /boot
+          args: --bind "$(pwd)":/run/external
           run: |
             cat /run/external/boot-config.snippet >> /boot/config.txt
             echo '' >> /boot/config.txt
@@ -142,8 +147,8 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          args: --bind "$(pwd)":/run/external
           boot-partition-mount: /boot/firmware
+          args: --bind "$(pwd)":/run/external
           run: |
             echo "#Written as /boot/firmware/config.txt" >> /boot/firmware/config.txt
             cp /boot/firmware/config.txt /run/external/boot.config
@@ -157,6 +162,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           args: --bind "$(pwd)":/run/external
           run: |
             #/usr/bin/env bash -x
@@ -177,6 +183,7 @@ jobs:
         if: ${{ ! endsWith(matrix.os, '-arm') }}
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           args: --bind "$(pwd)":/run/external
           boot: true
           run: |
@@ -204,6 +211,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           user: pi
           boot: true
           run: |
@@ -220,6 +228,7 @@ jobs:
           # Note: this test should be run on a bookworm image to exercise the required functionality
           image: rpi-os-image.img
           boot: true
+          boot-partition-mount: /boot/firmware
           run: |
             #!/bin/sh -e
             echo "cgroup v2 mount:"
@@ -232,6 +241,7 @@ jobs:
         if: ${{ endsWith(matrix.os, '24.04-arm') }}
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           run: |
             export DEBIAN_FRONTEND=noninteractive
             apt-get update
@@ -253,6 +263,7 @@ jobs:
         if: ${{ endsWith(matrix.os, '24.04-arm') }}
         with:
           image: rpi-os-image.img
+          boot-partition-mount: /boot/firmware
           args: --capability=CAP_NET_ADMIN
           run: |
             #!/bin/bash -eux
