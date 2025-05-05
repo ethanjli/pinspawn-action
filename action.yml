@@ -34,7 +34,7 @@ inputs:
   boot-partition-mount:
     description: Mount point of the boot partition.
     required: false
-    default: '/boot'
+    default: ''
 
 runs:
   using: composite

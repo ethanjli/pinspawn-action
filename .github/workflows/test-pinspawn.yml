@@ -129,16 +129,14 @@ jobs:
         with:
           image: rpi-os-image.img
           args: --bind "$(pwd)":/run/external
-          boot-partition-mount: /boot
+          #boot-partition-mount: /boot
           run: |
             cat /run/external/boot-config.snippet >> /boot/config.txt
             echo '' >> /boot/config.txt
             cp /boot/config.txt /run/external/boot.config
 
       - name: Check the bootloader config
-        run: |
-          cat boot.config
-          grep 'dtoverlay=i2c-rtc,rv3028' boot.config
+        run: grep 'dtoverlay=i2c-rtc,rv3028' boot.config
 
       - name: Modify bootloader configuration with different boot partition mount point
         uses: ./
@@ -147,15 +145,13 @@ jobs:
           args: --bind "$(pwd)":/run/external
           boot-partition-mount: /boot/firmware
           run: |
-            echo "/boot:"
-            ls /boot
-            echo "/boot/firmware:"
-            ls /boot/firmware
             echo "#Written as /boot/firmware/config.txt" >> /boot/firmware/config.txt
             cp /boot/firmware/config.txt /run/external/boot.config
 
       - name: Check the bootloader config
-        run: grep 'Written as /boot/firmware.config.txt' boot.config
+        run: |
+          grep 'dtoverlay=i2c-rtc,rv3028' boot.config
+          grep 'Written as /boot/firmware.config.txt' boot.config
 
       - name: Query installed packages
         uses: ./
