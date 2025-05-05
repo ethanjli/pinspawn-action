@@ -118,9 +118,10 @@ to use systemd-nspawn with Raspberry Pi OS images.
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
+    boot-partition-mount: /boot/firmware
     run: |
-      cat /run/external/boot-config.snippet >> /boot/config.txt
-      cp /boot/config.txt /run/external/boot.config
+      cat /run/external/boot-config.snippet >> /boot/firmware/config.txt
+      cp /boot/firmware/config.txt /run/external/boot.config
 
 - name: Print the bootloader config
   run: cat boot.config
@@ -204,15 +205,16 @@ trying to run it on `ubuntu-22.04-arm` results in an error when `dockerd` tries 
 
 Inputs:
 
-| Input         | Allowed values                   | Required?            | Description                                                                               |
-|---------------|----------------------------------|----------------------|-------------------------------------------------------------------------------------------|
-| `image`       | file path                        | yes                  | Path of the image to use for the container.                                               |
-| `args`        | `systemd-nspawn` options/args    | no (default ``)      | Options, args, and/or a command to pass to `systemd-nspawn`.                              |
-| `shell`       | ``, `bash`, `sh`, `python`, etc. | no (default ``)      | The shell to use for running commands.                                                    |
-| `run`         | shell commands                   | no (default ``)      | Commands to run in the shell.                                                             |
-| `user`        | name of user in image            | no (default `root`)  | The user to run commands as.                                                              |
-| `boot`        | `false`, `true`                  | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.                                 |
-| `run-service` | file path                        | no (default ``)      | systemd service to run `shell` with the `run` commands; only used with booted containers. |
+| Input                  | Allowed values                   | Required?            | Description                                                                               |
+|------------------------|----------------------------------|----------------------|-------------------------------------------------------------------------------------------|
+| `image`                | file path                        | yes                  | Path of the image to use for the container.                                               |
+| `args`                 | `systemd-nspawn` options/args    | no (default ``)      | Options, args, and/or a command to pass to `systemd-nspawn`.                              |
+| `shell`                | ``, `bash`, `sh`, `python`, etc. | no (default ``)      | The shell to use for running commands.                                                    |
+| `run`                  | shell commands                   | no (default ``)      | Commands to run in the shell.                                                             |
+| `user`                 | name of user in image            | no (default `root`)  | The user to run commands as.                                                              |
+| `boot`                 | `false`, `true`                  | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.                                 |
+| `run-service`          | file path                        | no (default ``)      | systemd service to run `shell` with the `run` commands; only used with booted containers. |
+| `boot-partition-mount` | file path                        | no (default `/boot`) | Mount point of the boot partition.                                                        |
 
 - `image` must be the path of an unmounted raw disk image (such as a Raspberry Pi OS SD card image),
   where partition 2 should be mounted as the root filesystem (i.e. `/`) and partition 1 should be
@@ -271,6 +273,11 @@ Inputs:
   - If this flag is enabled, then any arguments specified as the command line in `args` are used as
     arguments for the init program, i.e. `systemd-nspawn` will be invoked like
     `systemd-nspawn --boot {args}`.
+
+- If `boot-partition-mount` is not specified, it will default to `/boot` (for compatibility with
+  RPi OS bullseye) but emit a warning because the default value of this parameter will change to
+  `/boot/firmware` in a future release. To suppress the warning (e.g. because you will continue
+  building images on RPi OS bullseye), you can manually set the value of this parameter to `/boot`.
 
 ## Running Locally
 

@@ -31,6 +31,10 @@ inputs:
       The systemd service to use for running `shell` with the `run` commands if the image's init
       program is booted.
     required: false
+  boot-partition-mount:
+    description: Mount point of the boot partition.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -69,5 +73,6 @@ runs:
         INPUT_USER: ${{ inputs.user }}
         INPUT_BOOT: ${{ inputs.boot }}
         INPUT_RUN_SERVICE: ${{ inputs.run-service }}
+        INPUT_BOOT_PARTITION_MOUNT: ${{ inputs.boot-partition-mount }}
       run: |
         ${{ github.action_path }}/gha-wrapper-pinspawn.sh

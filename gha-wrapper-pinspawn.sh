@@ -3,35 +3,35 @@
 action_root="$(dirname "$(realpath "$BASH_SOURCE")")"
 
 case "$INPUT_SHELL" in
-  '')
-    device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
-    if sudo systemd-nspawn --quiet --image "${device}p2" which bash > /dev/null; then
-      shell_command='bash -e {0}'
-    else
-      echo "Warning: Falling back to sh because bash wasn't found!"
-      shell_command='sh -e {0}'
-    fi
-    sudo losetup -d "$device"
-    ;;
-  'bash')
-    device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
-    if sudo systemd-nspawn --quiet --image "${device}p2" which bash > /dev/null; then
-      shell_command='bash --noprofile --norc -eo pipefail {0}'
-    else
-      echo "Warning: Falling back to sh because bash wasn't found!"
-      shell_command='sh -e {0}'
-    fi
-    sudo losetup -d "$device"
-    ;;
-  'python')
-    shell_command='python {0}'
-    ;;
-  'sh')
+'')
+  device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
+  if sudo systemd-nspawn --quiet --image "${device}p2" which bash >/dev/null; then
+    shell_command='bash -e {0}'
+  else
+    echo "Warning: Falling back to sh because bash wasn't found!"
     shell_command='sh -e {0}'
-    ;;
-  *)
-    shell_command="$INPUT_SHELL"
-    ;;
+  fi
+  sudo losetup -d "$device"
+  ;;
+'bash')
+  device="$(sudo losetup -fP --show "$INPUT_IMAGE")"
+  if sudo systemd-nspawn --quiet --image "${device}p2" which bash >/dev/null; then
+    shell_command='bash --noprofile --norc -eo pipefail {0}'
+  else
+    echo "Warning: Falling back to sh because bash wasn't found!"
+    shell_command='sh -e {0}'
+  fi
+  sudo losetup -d "$device"
+  ;;
+'python')
+  shell_command='python {0}'
+  ;;
+'sh')
+  shell_command='sh -e {0}'
+  ;;
+*)
+  shell_command="$INPUT_SHELL"
+  ;;
 esac
 
 boot_run_service=""
@@ -42,7 +42,17 @@ if [ "$INPUT_BOOT" == "true" ]; then
   fi
 fi
 
-echo "Running pinspawn.sh \"$INPUT_IMAGE\" \"$INPUT_USER\" \"$boot_run_service\" \"$INPUT_ARGS\" \"$shell_command\"..."
-echo "$INPUT_RUN" | \
+if [ "$INPUT_BOOT_PARTITION_MOUNT" == "" ]; then
+  echo "::warning title=Future change to default parameter value in pinspawn-action::In a future " \
+    "version, the pinspawn-action's boot-partition-mount parameter's default value will change " \
+    "from /boot to /boot/firmware (in accordance with RPi OS bookworm's change in the default " \
+    "mountpoint of the boot partition). If you want to suppress this warning, you can manually " \
+    "specify the boot-partition-mount parameter's value (as /boot for bullseye or /boot/firmware " \
+    "for bookworm)."
+  INPUT_BOOT_PARTITION_MOUNT="/boot"
+fi
+
+echo "Running pinspawn.sh \"$INPUT_IMAGE\" \"$INPUT_USER\" \"$boot_run_service\" \"$INPUT_BOOT_PARTITION_MOUNT\" \"$INPUT_ARGS\" \"$shell_command\"..."
+echo "$INPUT_RUN" |
   "$action_root/pinspawn.sh" \
-    "$INPUT_IMAGE" "$INPUT_USER" "$boot_run_service" "$INPUT_ARGS" "$shell_command"
+    "$INPUT_IMAGE" "$INPUT_USER" "$boot_run_service" "$INPUT_BOOT_PARTITION_MOUNT" "$INPUT_ARGS" "$shell_command"
