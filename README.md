@@ -277,7 +277,8 @@ Inputs:
 - If `boot-partition-mount` is not specified, it will default to `/boot` (for compatibility with
   RPi OS bullseye) but emit a warning because the default value of this parameter will change to
   `/boot/firmware` in a future release. To suppress the warning (e.g. because you will continue
-  building images on RPi OS bullseye), you can manually set the value of this parameter to `/boot`.
+  building images on RPi OS bullseye), you can manually set the value of this parameter to `/boot`
+  (for bullseye) or `/boot/firmware` (for bookworm).
 
 ## Running Locally
 

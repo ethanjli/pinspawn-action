@@ -150,7 +150,7 @@ jobs:
           boot-partition-mount: /boot/firmware
           args: --bind "$(pwd)":/run/external
           run: |
-            echo "#Written as /boot/firmware/config.txt" >> /boot/firmware/config.txt
+            echo "# Edited as /boot/firmware/config.txt" >> /boot/firmware/config.txt
             cp /boot/firmware/config.txt /run/external/boot.config
 
       - name: Check the bootloader config
