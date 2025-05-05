@@ -133,7 +133,7 @@ jobs:
         uses: ./
         with:
           image: rpi-os-image.img
-          #boot-partition-mount: /boot
+          boot-partition-mount: /boot
           args: --bind "$(pwd)":/run/external
           run: |
             cat /run/external/boot-config.snippet >> /boot/config.txt
