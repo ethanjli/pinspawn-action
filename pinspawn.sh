@@ -5,23 +5,25 @@ mount_image() {
   image="$1"
   local sysroot
   sysroot="${2:-}"
+  local boot_mountpoint
+  boot_mountpoint="$3"
 
   device="$(sudo losetup -fP --show "$image")"
-  if [ -z "$device" ]; then
+  if [ "$device" = "" ]; then
     echo "Error: couldn't mount $image!"
     return 1
   fi
 
-  if [ -z "$sysroot" ]; then
+  if [ "$sysroot" = "" ]; then
     echo "$device"
     return 0
   fi
 
   sudo mkdir -p "$sysroot"
   sudo mount "${device}p2" "$sysroot" 1>&2
-  sudo mount "${device}p1" "$sysroot/boot" 1>&2
+  sudo mount "${device}p1" "$sysroot$boot_mountpoint" 1>&2
 
-  echo $device
+  echo "$device"
 }
 
 unmount_image() {
@@ -29,9 +31,11 @@ unmount_image() {
   device="$1"
   local sysroot
   sysroot="${2:-}"
+  local boot_mountpoint
+  boot_mountpoint="$3"
 
   if [ ! -z "$sysroot" ]; then
-    sudo umount "$sysroot/boot"
+    sudo umount "$sysroot$boot_mountpoint"
     sudo umount "$sysroot"
   fi
 
@@ -53,28 +57,28 @@ interpolate_boot_run_service_line() {
   interpolated="$line"
   local interpolated_next
   # Interpolate {user}:
-  interpolated_next="$(\
-    printf '%s' "$interpolated" | awk -v r="$user" -e 'gsub(/{user}/, r)' \
+  interpolated_next="$(
+    printf '%s' "$interpolated" | awk -v r="$user" -e 'gsub(/{user}/, r)'
   )"
-  if [ -z "$interpolated_next" ]; then # line didn't have {user}
+  if [ "$interpolated_next" = "" ]; then # line didn't have {user}
     interpolated_next="$interpolated"
   fi
   interpolated="$interpolated_next"
 
   # Interpolate {command}:
-  interpolated_next="$(\
-    printf '%s' "$interpolated" | awk -v r="$shell_script_command" -e 'gsub(/{command}/, r)' \
+  interpolated_next="$(
+    printf '%s' "$interpolated" | awk -v r="$shell_script_command" -e 'gsub(/{command}/, r)'
   )"
-  if [ -z "$interpolated_next" ]; then # line didn't have {command}
+  if [ "$interpolated_next" = "" ]; then # line didn't have {command}
     interpolated_next="$interpolated"
   fi
   interpolated="$interpolated_next"
 
   # Interpolate {result}:
-  interpolated_next="$(\
-    printf '%s' "$interpolated" | awk -v r="$result_file" -e 'gsub(/{result}/, r)' \
+  interpolated_next="$(
+    printf '%s' "$interpolated" | awk -v r="$result_file" -e 'gsub(/{result}/, r)'
   )"
-  if [ -z "$interpolated_next" ]; then # line didn't have {result}
+  if [ "$interpolated_next" = "" ]; then # line didn't have {result}
     interpolated_next="$interpolated"
   fi
   interpolated="$interpolated_next"
@@ -82,31 +86,32 @@ interpolate_boot_run_service_line() {
   echo "$interpolated"
 }
 
-image="$1" # e.g. "rpi-os-image.img"
-user="$2" # e.g. "pi"
-boot_run_service="$3" # e.g. "/path/to/default-boot-run.service"
-args="$4" # e.g. "--bind /path/in/host:/path/in/container"
-shell_command="$5" # e.g. "bash -e {0}"
+image="$1"                # e.g. "rpi-os-image.img"
+user="$2"                 # e.g. "pi"
+boot_run_service="$3"     # e.g. "/path/to/default-boot-run.service"
+boot_partition_mount="$4" # e.g. "/boot"
+args="$5"                 # e.g. "--bind /path/in/host:/path/in/container"
+shell_command="$6"        # e.g. "bash -e {0}"
 
 # Mount the image
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
-device="$(mount_image "$image" "$sysroot")"
+device="$(mount_image "$image" "$sysroot" "$boot_partition_mount")"
 
 # Make a shell script with the run commands
 # Note: we can't use `/tmp` because it will be remounted by the container
 tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 # Note: this command reads & processes stdin:
-sudo tee "$tmp_script" > /dev/null
+sudo tee "$tmp_script" >/dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
 sudo systemd-nspawn --directory "$sysroot" --quiet \
   chown "$user" "$container_tmp_script"
 
 # Prepare the shell script command
-shell_script_command="$(\
-  printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)' \
+shell_script_command="$(
+  printf '%s' "$shell_command" | awk -v r="$container_tmp_script" -e 'gsub(/{0}/, r)'
 )"
-if [ -z "$shell_script_command" ]; then
+if [ "$shell_script_command" = "" ]; then
   # shell_command didn't have {0}, so we'll just use it verbatim:
   shell_script_command="$shell_command"
 fi
@@ -126,16 +131,16 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     chown "$user" "${boot_tmp_result#"$sysroot"}"
-  boot_tmp_service="$(\
-    sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn.XXXXXXX \
+  boot_tmp_service="$(
+    sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn.XXXXXXX
   )"
-  readarray -t lines < "$boot_run_service"
+  readarray -t lines <"$boot_run_service"
   for line in "${lines[@]}"; do
-    printf '%s\n' "$(\
+    printf '%s\n' "$(
       interpolate_boot_run_service_line \
-        "$line" "$user" "$shell_script_command" "${boot_tmp_result#"$sysroot"}" \
-    )" | \
-      sudo tee --append "$boot_tmp_service" > /dev/null
+        "$line" "$user" "$shell_script_command" "${boot_tmp_result#"$sysroot"}"
+    )" |
+      sudo tee --append "$boot_tmp_service" >/dev/null
   done
   sudo chmod a+r "$boot_tmp_service"
   echo "Boot run service $boot_tmp_service:"
@@ -205,19 +210,19 @@ if [ ! -z "$boot_run_service" ]; then
   # Check the return code of the shell script
   # Note: this is not needed in unbooted containers because errors there are propagated to the
   # caller of the script
-  if ! sudo cat "$boot_tmp_result" > /dev/null; then
+  if ! sudo cat "$boot_tmp_result" >/dev/null; then
     echo "Error: $boot_run_service did not store a result indicating success/failure!"
     exit 1
   elif [ "$(sudo cat "$boot_tmp_result")" != "0" ]; then
     result="$(sudo cat "$boot_tmp_result")"
     echo "Error: $boot_run_service failed while running $shell_script_command: $result"
     case "$result" in
-      '' | *[!0-9]*)
-        exit 1
-        ;;
-      *)
-        exit "$result"
-        ;;
+    '' | *[!0-9]*)
+      exit 1
+      ;;
+    *)
+      exit "$result"
+      ;;
     esac
   fi
   sudo rm -f "$boot_tmp_result"
@@ -230,4 +235,4 @@ fi
 sudo rm -f "$tmp_script"
 
 # Clean up the mount
-unmount_image "$device" "$sysroot"
+unmount_image "$device" "$sysroot" "$boot_partition_mount"
