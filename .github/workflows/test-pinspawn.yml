@@ -156,7 +156,7 @@ jobs:
       - name: Check the bootloader config
         run: |
           grep 'dtoverlay=i2c-rtc,rv3028' boot.config
-          grep 'Written as /boot/firmware.config.txt' boot.config
+          grep 'Edited as /boot/firmware.config.txt' boot.config
 
       - name: Query installed packages
         uses: ./
