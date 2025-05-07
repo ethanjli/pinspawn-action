@@ -118,7 +118,7 @@ to use systemd-nspawn with Raspberry Pi OS images.
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
-    boot-partition-mount: /boot/firmware
+    boot-partition-mount: /boot/firmware # assumes rpi-os-image.img is for bookworm or later
     run: |
       cat /run/external/boot-config.snippet >> /boot/firmware/config.txt
       cp /boot/firmware/config.txt /run/external/boot.config
@@ -214,7 +214,7 @@ Inputs:
 | `user`                 | name of user in image            | no (default `root`)  | The user to run commands as.                                                              |
 | `boot`                 | `false`, `true`                  | no (default `false`) | Boot the image's init program (usually systemd) as PID 1.                                 |
 | `run-service`          | file path                        | no (default ``)      | systemd service to run `shell` with the `run` commands; only used with booted containers. |
-| `boot-partition-mount` | file path                        | no (default `/boot`) | Mount point of the boot partition.                                                        |
+| `boot-partition-mount` | file path                        | no (default ``)      | Mount point of the boot partition.                                                        |
 
 - `image` must be the path of an unmounted raw disk image (such as a Raspberry Pi OS SD card image),
   where partition 2 should be mounted as the root filesystem (i.e. `/`) and partition 1 should be
@@ -274,11 +274,9 @@ Inputs:
     arguments for the init program, i.e. `systemd-nspawn` will be invoked like
     `systemd-nspawn --boot {args}`.
 
-- If `boot-partition-mount` is not specified, it will default to `/boot` (for compatibility with
-  RPi OS bullseye) but emit a warning because the default value of this parameter will change to
-  `/boot/firmware` in a future release. To suppress the warning (e.g. because you will continue
-  building images on RPi OS bullseye), you can manually set the value of this parameter to `/boot`
-  (for bullseye) or `/boot/firmware` (for bookworm).
+- If `boot-partition-mount` is not specified, the action will automatically select `/boot/firmware`
+  if that directory exists in the root partition (which is true of RPi OS bookworm or later), or
+  `/boot` otherwise (for compatibility with RPi OS bullseye).
 
 ## Running Locally
 
