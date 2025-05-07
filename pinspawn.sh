@@ -59,7 +59,7 @@ unmount_image() {
   fi
 
   sudo e2fsck -p -f "${device}p2" | grep -v 'could be narrower.  IGNORED.'
-  sudo losetup -d "$device"
+  sudo losetup -d "$device" >/dev/null
 }
 
 interpolate_boot_run_service_line() {
