@@ -47,6 +47,14 @@ jobs:
 
       # Run shell commands as root
 
+      - name: Install pinspawn-action dependencies
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          args: --quiet
+          run: |
+            echo 'Installed!'
+
       - name: Install and run cowsay
         uses: ./
         with:

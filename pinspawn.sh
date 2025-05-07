@@ -58,8 +58,8 @@ unmount_image() {
     sudo umount "$sysroot"
   fi
 
-  sudo e2fsck -p -f "${device}p2" | grep -v 'could be narrower.  IGNORED.'
-  sudo losetup -d "$device" >/dev/null
+  sudo e2fsck -p -f "${device}p2" 2>&1 | grep -v 'could be narrower.  IGNORED.'
+  sudo losetup -d "$device"
 }
 
 interpolate_boot_run_service_line() {
@@ -210,6 +210,7 @@ else
   # We use eval to work around word splitting in strings inside quotes in shell_script_command:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args $shell_script_command"
 fi
+echo "" >&2
 
 if [ ! -z "$boot_run_service" ]; then
   # Restore the initial state of userconfig.service
