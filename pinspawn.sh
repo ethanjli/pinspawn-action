@@ -8,7 +8,7 @@ mount_image() {
 
   device="$(sudo losetup -fP --show "$image")"
   if [ "$device" = "" ]; then
-    echo "Error: couldn't mount $image!" >2
+    echo "Error: couldn't mount $image!" >&2
     return 1
   fi
 
@@ -32,12 +32,13 @@ mount_image_boot_partition() {
   boot_mountpoint="$3"
 
   if [ "$boot_mountpoint" = "" ]; then
-    echo "Autodetecting mountpoint for boot partition based on root partition structure..." >2
+    echo "Autodetecting mountpoint for boot partition based on root partition structure..." >&2
     if [ -d "$sysroot/boot/firmware" ]; then # for bookworm and later
       boot_mountpoint="/boot/firmware"
     else # for bullseye and earlier
       boot_mountpoint="/boot"
     fi
+    echo "Boot mountpoint will be: $boot_mountpoint" >&2
   fi
 
   sudo mount "${device}p1" "$sysroot$boot_mountpoint" 1>&2
@@ -136,7 +137,7 @@ if [ "$shell_script_command" = "" ]; then
 fi
 
 if [ ! -z "$boot_run_service" ]; then
-  echo "Preparing to run commands during container boot..." >2
+  echo "Preparing to run commands during container boot..." >&2
   args="--boot $args"
 
   # Inject the shell script into the container
@@ -162,8 +163,8 @@ if [ ! -z "$boot_run_service" ]; then
       sudo tee --append "$boot_tmp_service" >/dev/null
   done
   sudo chmod a+r "$boot_tmp_service"
-  echo "Boot run service $boot_tmp_service:" >2
-  cat "$boot_tmp_service" >2
+  echo "Boot run service $boot_tmp_service:" >&2
+  cat "$boot_tmp_service" >&2
   container_boot_tmp_service="${boot_tmp_service#"$sysroot/etc/systemd/system/"}"
   sudo systemd-nspawn --directory "$sysroot" --quiet \
     systemctl enable "$container_boot_tmp_service"
@@ -190,7 +191,7 @@ if [ ! -z "$boot_run_service" ]; then
       systemctl mask userconfig.service
   fi
 
-  echo "Running container with boot..." >2
+  echo "Running container with boot..." >&2
   # Note: we force systemd to boot with cgroup v2 (needed for Docker to start), since systemd is
   # unable to automatically detect cgroup v2 support in RPi OS bookworm for some reason. This should
   # be fine on RPi OS images since bullseye supports cgroup v2 (and its support is correctly
@@ -205,7 +206,7 @@ else
   if [ ! -z "$user" ]; then
     args="--user $user $args"
   fi
-  echo "Running container without boot..." >2
+  echo "Running container without boot..." >&2
   # We use eval to work around word splitting in strings inside quotes in shell_script_command:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args $shell_script_command"
 fi
@@ -230,11 +231,11 @@ if [ ! -z "$boot_run_service" ]; then
   # Note: this is not needed in unbooted containers because errors there are propagated to the
   # caller of the script
   if ! sudo cat "$boot_tmp_result" >/dev/null; then
-    echo "Error: $boot_run_service did not store a result indicating success/failure!" >2
+    echo "Error: $boot_run_service did not store a result indicating success/failure!" >&2
     exit 1
   elif [ "$(sudo cat "$boot_tmp_result")" != "0" ]; then
     result="$(sudo cat "$boot_tmp_result")"
-    echo "Error: $boot_run_service failed while running $shell_script_command: $result" >2
+    echo "Error: $boot_run_service failed while running $shell_script_command: $result" >&2
     case "$result" in
     '' | *[!0-9]*)
       exit 1
