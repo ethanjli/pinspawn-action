@@ -54,11 +54,14 @@ unmount_image() {
   boot_mountpoint="$3"
 
   if [ ! -z "$sysroot" ]; then
-    sudo umount "$sysroot$boot_mountpoint" >/dev/null
-    sudo umount "$sysroot" >/dev/null
+    echo "umount..." >&2
+    sudo umount "$sysroot$boot_mountpoint"
+    sudo umount "$sysroot" 2>/dev/null
   fi
 
+  echo "e2fsck..." >&2
   sudo e2fsck -p -f "${device}p2" 2>&1 | grep -v 'could be narrower.  IGNORED.'
+  echo "losetup..." >&2
   sudo losetup -d "$device"
 }
 
