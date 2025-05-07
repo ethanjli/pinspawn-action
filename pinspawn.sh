@@ -53,10 +53,9 @@ unmount_image() {
   local boot_mountpoint
   boot_mountpoint="$3"
 
-  echo "Unmounting..." >&2
   if [ ! -z "$sysroot" ]; then
-    sudo umount --quiet "$sysroot$boot_mountpoint"
-    sudo umount --quiet "$sysroot"
+    sudo umount "$sysroot$boot_mountpoint" >/dev/null
+    sudo umount "$sysroot" >/dev/null
   fi
 
   sudo e2fsck -p -f "${device}p2" 2>&1 | grep -v 'could be narrower.  IGNORED.'
