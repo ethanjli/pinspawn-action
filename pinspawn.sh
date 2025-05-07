@@ -58,9 +58,9 @@ unmount_image() {
     sudo umount "$sysroot"
   fi
 
-  sudo e2fsck -p -f "${device}p2" 2>&1 |
-    grep -v 'could be narrower.  IGNORED.' |
-    grep -v ' non-contiguous), '
+  sudo e2fsck -p -f "${device}p2" 2>&1
+  # grep -v 'could be narrower.  IGNORED.' |
+  # grep -v ' non-contiguous), '
   sudo losetup -d "$device"
 }
 
