@@ -208,7 +208,7 @@ jobs:
           args: --quiet
           run: |
             /usr/games/cowsay "I am $USER!"
-            if [ "$USER" != "pi" ]; then
+            if [ "$USER" = "pi" ]; then
               exit 666
             fi
 
