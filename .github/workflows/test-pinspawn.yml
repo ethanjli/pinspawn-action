@@ -215,9 +215,18 @@ jobs:
 
       # Run shell commands in a booted container
 
+      # Note: this is code to troubleshoot premature shutdown on arm64 runners
+      - name: Disable unnecessary services
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          args: --bind "$(pwd)":/run/external
+          run: |
+            systemctl disable sshswitch.service
+            systemctl disable regenerate_ssh_host_keys.service
+
       - name: Analyze systemd boot process
         uses: ./
-        if: ${{ ! endsWith(matrix.os, '-arm') }}
         with:
           image: rpi-os-image.img
           args: --bind "$(pwd)":/run/external --quiet
@@ -225,12 +234,22 @@ jobs:
           run: |
             while ! systemd-analyze 2>/dev/null; do
               echo "Waiting for boot to finish..."
-              sleep 5
+              systemctl list-jobs --no-pager
+              sleep 1
             done
             systemd-analyze critical-chain | cat
             systemd-analyze blame | cat
             systemd-analyze plot > /run/external/bootup-timeline.svg
             echo "Done!"
+
+      - name: Check logs from previous boot
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          boot: true
+          run: |
+            #/usr/bin/env bash -x
+            journalctl -b-1 --no-pager
 
       - name: Upload the bootup timeline to Job Artifacts
         uses: actions/upload-artifact@v4
