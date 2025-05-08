@@ -192,7 +192,7 @@ if [ ! -z "$boot_run_service" ]; then
   fi
 
   echo "Running container with boot..." >&2
-  echo "---" > &2
+  echo "---" >&2
   # Note: we force systemd to boot with cgroup v2 (needed for Docker to start), since systemd is
   # unable to automatically detect cgroup v2 support in RPi OS bookworm for some reason. This should
   # be fine on RPi OS images since bullseye supports cgroup v2 (and its support is correctly
@@ -208,7 +208,7 @@ else
     args="--user $user $args"
   fi
   echo "Running container without boot..." >&2
-  echo "---" > &2
+  echo "---" >&2
   # We use eval to work around word splitting in strings inside quotes in shell_script_command:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args $shell_script_command"
 fi
