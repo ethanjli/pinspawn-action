@@ -188,17 +188,6 @@ jobs:
             systemctl disable sshswitch.service
             systemctl disable regenerate_ssh_host_keys.service
 
-      # Note: this is an attempt to work around consequences of auto-shutdown behavior on boot by
-      # doing the first boot before any slow steps.
-      - name: Do a first boot
-        uses: ./
-        with:
-          image: rpi-os-image.img
-          args: --bind "$(pwd)":/run/external
-          boot: true
-          run: |
-            echo "First boot complete!"
-
       - name: Analyze systemd boot process
         uses: ./
         with:
