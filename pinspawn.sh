@@ -124,7 +124,7 @@ tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 sudo tee "$tmp_script" >/dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
-sudo systemd-nspawn --directory "$sysroot" --quiet \
+sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
   chown "$user" "$container_tmp_script"
 
 # Prepare the shell script command
@@ -144,12 +144,12 @@ if [ ! -z "$boot_run_service" ]; then
   boot_tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
   sudo cp "$tmp_script" "$boot_tmp_script"
   sudo chmod a+x "$boot_tmp_script"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     chown "$user" "${boot_tmp_script#"$sysroot"}"
 
   # Inject into the container a service to run the shell script command and record its return value
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     chown "$user" "${boot_tmp_result#"$sysroot"}"
   boot_tmp_service="$(
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn.XXXXXXX
@@ -166,28 +166,28 @@ if [ ! -z "$boot_run_service" ]; then
   echo "Boot run service $boot_tmp_service:" >&2
   cat "$boot_tmp_service" >&2
   container_boot_tmp_service="${boot_tmp_service#"$sysroot/etc/systemd/system/"}"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     systemctl enable "$container_boot_tmp_service"
 
   # Ensure that default.target is not graphical.target
   tmp_default_target="$(sudo mktemp --tmpdir="$sysroot/var/lib" piqemu-default-target.XXXXXXX)"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     bash -c "systemctl get-default | sudo tee \"${tmp_default_target#"$sysroot"}\" > /dev/null"
   default_target="$(sudo cat "$tmp_default_target")"
   sudo rm "$tmp_default_target"
   if [ "$default_target" == "graphical.target" ]; then
-    sudo systemd-nspawn --directory "$sysroot" --quiet \
+    sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
       systemctl set-default multi-user.target
   fi
 
   # Mask userconfig.service
   tmp_userconfig_enabled="$(sudo mktemp --tmpdir="$sysroot/var/lib" piqemu-userconfig-enabled.XXXXXXX)"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     bash -c "systemctl is-enabled userconfig.service | sudo tee \"${tmp_userconfig_enabled#"$sysroot"}\" > /dev/null || true"
   userconfig_enabled="$(sudo cat "$tmp_userconfig_enabled")"
   sudo rm "$tmp_userconfig_enabled"
   if [[ "$userconfig_enabled" != "not-found" && "$userconfig_enabled" != masked* ]]; then
-    sudo systemd-nspawn --directory "$sysroot" --quiet \
+    sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
       systemctl mask userconfig.service
   fi
 
@@ -216,16 +216,16 @@ fi
 if [ ! -z "$boot_run_service" ]; then
   # Restore the initial state of userconfig.service
   if [[ "$userconfig_enabled" != "not-found" && "$userconfig_enabled" != masked* ]]; then
-    sudo systemd-nspawn --directory "$sysroot" --quiet \
+    sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
       systemctl unmask userconfig.service
   fi
 
   # Restore the initial state of default.target
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     bash -c "systemctl set-default $default_target"
 
   # Clean up the injected service
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     systemctl disable "$container_boot_tmp_service"
   sudo rm -f "$boot_tmp_service"
 
