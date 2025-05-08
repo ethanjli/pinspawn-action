@@ -5,12 +5,10 @@ mount_image() {
   image="$1"
   local sysroot
   sysroot="${2:-}"
-  local boot_mountpoint
-  boot_mountpoint="$3"
 
   device="$(sudo losetup -fP --show "$image")"
   if [ "$device" = "" ]; then
-    echo "Error: couldn't mount $image!"
+    echo "Error: couldn't mount $image!" >&2
     return 1
   fi
 
@@ -21,9 +19,30 @@ mount_image() {
 
   sudo mkdir -p "$sysroot"
   sudo mount "${device}p2" "$sysroot" 1>&2
-  sudo mount "${device}p1" "$sysroot$boot_mountpoint" 1>&2
 
   echo "$device"
+}
+
+mount_image_boot_partition() {
+  local device
+  device="$1"
+  local sysroot
+  sysroot="${2:-}"
+  local boot_mountpoint
+  boot_mountpoint="$3"
+
+  if [ "$boot_mountpoint" = "" ]; then
+    echo "Autodetecting mountpoint for boot partition based on root partition structure..." >&2
+    if [ -d "$sysroot/boot/firmware" ]; then # for bookworm and later
+      boot_mountpoint="/boot/firmware"
+    else # for bullseye and earlier
+      boot_mountpoint="/boot"
+    fi
+    echo "Boot mountpoint will be: $boot_mountpoint" >&2
+  fi
+
+  sudo mount "${device}p1" "$sysroot$boot_mountpoint" 1>&2
+  echo "$boot_mountpoint"
 }
 
 unmount_image() {
@@ -39,7 +58,7 @@ unmount_image() {
     sudo umount "$sysroot"
   fi
 
-  sudo e2fsck -p -f "${device}p2" | grep -v 'could be narrower.  IGNORED.'
+  output="$(sudo e2fsck -p -f "${device}p2" 2>&1)" || printf "\n$output\n" >&2
   sudo losetup -d "$device"
 }
 
@@ -96,6 +115,7 @@ shell_command="$6"        # e.g. "bash -e {0}"
 # Mount the image
 sysroot="$(sudo mktemp -d --tmpdir=/mnt sysroot.XXXXXXX)"
 device="$(mount_image "$image" "$sysroot" "$boot_partition_mount")"
+boot_partition_mount="$(mount_image_boot_partition "$device" "$sysroot" "$boot_partition_mount")"
 
 # Make a shell script with the run commands
 # Note: we can't use `/tmp` because it will be remounted by the container
@@ -104,7 +124,7 @@ tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
 sudo tee "$tmp_script" >/dev/null
 sudo chmod a+x "$tmp_script"
 container_tmp_script="${tmp_script#"$sysroot"}"
-sudo systemd-nspawn --directory "$sysroot" --quiet \
+sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
   chown "$user" "$container_tmp_script"
 
 # Prepare the shell script command
@@ -117,19 +137,19 @@ if [ "$shell_script_command" = "" ]; then
 fi
 
 if [ ! -z "$boot_run_service" ]; then
-  echo "Preparing to run commands during container boot..."
+  echo "Preparing to run commands during container boot..." >&2
   args="--boot $args"
 
   # Inject the shell script into the container
   boot_tmp_script="$(sudo mktemp --tmpdir="$sysroot/usr/bin" pinspawn-script.XXXXXXX)"
   sudo cp "$tmp_script" "$boot_tmp_script"
   sudo chmod a+x "$boot_tmp_script"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     chown "$user" "${boot_tmp_script#"$sysroot"}"
 
   # Inject into the container a service to run the shell script command and record its return value
   boot_tmp_result="$(sudo mktemp --tmpdir="$sysroot/var/lib" pinspawn-status.XXXXXXX)"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     chown "$user" "${boot_tmp_result#"$sysroot"}"
   boot_tmp_service="$(
     sudo mktemp --tmpdir="$sysroot/etc/systemd/system" --suffix=".service" pinspawn.XXXXXXX
@@ -143,35 +163,36 @@ if [ ! -z "$boot_run_service" ]; then
       sudo tee --append "$boot_tmp_service" >/dev/null
   done
   sudo chmod a+r "$boot_tmp_service"
-  echo "Boot run service $boot_tmp_service:"
-  cat "$boot_tmp_service"
+  echo "Boot run service $boot_tmp_service:" >&2
+  cat "$boot_tmp_service" >&2
   container_boot_tmp_service="${boot_tmp_service#"$sysroot/etc/systemd/system/"}"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     systemctl enable "$container_boot_tmp_service"
 
   # Ensure that default.target is not graphical.target
   tmp_default_target="$(sudo mktemp --tmpdir="$sysroot/var/lib" piqemu-default-target.XXXXXXX)"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     bash -c "systemctl get-default | sudo tee \"${tmp_default_target#"$sysroot"}\" > /dev/null"
   default_target="$(sudo cat "$tmp_default_target")"
   sudo rm "$tmp_default_target"
   if [ "$default_target" == "graphical.target" ]; then
-    sudo systemd-nspawn --directory "$sysroot" --quiet \
+    sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
       systemctl set-default multi-user.target
   fi
 
   # Mask userconfig.service
   tmp_userconfig_enabled="$(sudo mktemp --tmpdir="$sysroot/var/lib" piqemu-userconfig-enabled.XXXXXXX)"
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     bash -c "systemctl is-enabled userconfig.service | sudo tee \"${tmp_userconfig_enabled#"$sysroot"}\" > /dev/null || true"
   userconfig_enabled="$(sudo cat "$tmp_userconfig_enabled")"
   sudo rm "$tmp_userconfig_enabled"
   if [[ "$userconfig_enabled" != "not-found" && "$userconfig_enabled" != masked* ]]; then
-    sudo systemd-nspawn --directory "$sysroot" --quiet \
+    sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
       systemctl mask userconfig.service
   fi
 
-  echo "Running container with boot..."
+  echo "Running container with boot..." >&2
+  echo "---" >&2
   # Note: we force systemd to boot with cgroup v2 (needed for Docker to start), since systemd is
   # unable to automatically detect cgroup v2 support in RPi OS bookworm for some reason. This should
   # be fine on RPi OS images since bullseye supports cgroup v2 (and its support is correctly
@@ -186,7 +207,8 @@ else
   if [ ! -z "$user" ]; then
     args="--user $user $args"
   fi
-  echo "Running container without boot..."
+  echo "Running container without boot..." >&2
+  echo "---" >&2
   # We use eval to work around word splitting in strings inside quotes in shell_script_command:
   eval "sudo systemd-nspawn --directory \"$sysroot\" $args $shell_script_command"
 fi
@@ -194,16 +216,16 @@ fi
 if [ ! -z "$boot_run_service" ]; then
   # Restore the initial state of userconfig.service
   if [[ "$userconfig_enabled" != "not-found" && "$userconfig_enabled" != masked* ]]; then
-    sudo systemd-nspawn --directory "$sysroot" --quiet \
+    sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
       systemctl unmask userconfig.service
   fi
 
   # Restore the initial state of default.target
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     bash -c "systemctl set-default $default_target"
 
   # Clean up the injected service
-  sudo systemd-nspawn --directory "$sysroot" --quiet \
+  sudo systemd-nspawn --directory "$sysroot" --quiet --machine=raspberrypi \
     systemctl disable "$container_boot_tmp_service"
   sudo rm -f "$boot_tmp_service"
 
@@ -211,11 +233,11 @@ if [ ! -z "$boot_run_service" ]; then
   # Note: this is not needed in unbooted containers because errors there are propagated to the
   # caller of the script
   if ! sudo cat "$boot_tmp_result" >/dev/null; then
-    echo "Error: $boot_run_service did not store a result indicating success/failure!"
+    echo "Error: $boot_run_service did not store a result indicating success/failure!" >&2
     exit 1
   elif [ "$(sudo cat "$boot_tmp_result")" != "0" ]; then
     result="$(sudo cat "$boot_tmp_result")"
-    echo "Error: $boot_run_service failed while running $shell_script_command: $result"
+    echo "Error: $boot_run_service failed while running $shell_script_command: $result" >&2
     case "$result" in
     '' | *[!0-9]*)
       exit 1

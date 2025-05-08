@@ -5,7 +5,7 @@ After=getty.target
 [Service]
 Type=exec
 ExecStart=bash -c "\
-  su - {user} -c '{command}; echo $? | tee {result}'; \
+  su - {user} -c '{command}; echo $? | tee {result} | grep -v -E \'^0$\''; \
   echo Shutting down...; \
   shutdown now \
 " &
