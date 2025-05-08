@@ -58,7 +58,7 @@ unmount_image() {
     sudo umount "$sysroot"
   fi
 
-  output="$(sudo e2fsck -p -f "${device}p2" 2>&1" || echo "$output"
+  output="$(sudo e2fsck -p -f "${device}p2" 2>&1)" || echo "$output"
   sudo losetup -d "$device"
 }
 
