@@ -210,7 +210,7 @@ else
   echo "Running container without boot..." >&2
   echo "---" >&2
   # We use eval to work around word splitting in strings inside quotes in shell_script_command:
-  eval "sudo systemd-nspawn --directory \"$sysroot\" $args --as-pid2 $shell_script_command"
+  eval "sudo systemd-nspawn --directory \"$sysroot\" $args --machine=raspberrypi --as-pid2 $shell_script_command"
 fi
 
 if [ ! -z "$boot_run_service" ]; then
