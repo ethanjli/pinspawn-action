@@ -102,6 +102,6 @@ runs:
       run: |
         if [ "$(uname -m)" == "x86_64" ]; then
           sudo rm -rf /etc/binfmt.d
-          sudo cp -r /etc/binfmt.d.backup /tmp/binfmt.d
+          sudo cp -r /tmp/binfmt.d.backup /etc/binfmt.d
           sudo systemctl restart systemd-binfmt
         fi
