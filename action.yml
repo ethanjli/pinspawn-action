@@ -77,7 +77,7 @@ runs:
             sed 's/\(:[^C:]*\)$/\1C/' "$x" | \
               sudo tee /etc/binfmt.d/"$(basename "$x")"
           done
-          if ! sudo systemctl restart systemd-binfmt; then
+          if ! sudo systemctl restart systemd-binfmt 2>/dev/null; then
             # Repeatedly running this action with short commands can a failure due to excessively
             # frequent restarts:
             sudo systemctl reset-failed systemd-binfmt
@@ -108,7 +108,7 @@ runs:
         if [ "$(uname -m)" == "x86_64" ]; then
           sudo rm -rf /etc/binfmt.d
           sudo cp -r /tmp/binfmt.d.backup /etc/binfmt.d
-          if ! sudo systemctl restart systemd-binfmt; then
+          if ! sudo systemctl restart systemd-binfmt 2>/dev/null; then
             # Repeatedly running this action with short commands can a failure due to excessively
             # frequent restarts:
             sudo systemctl reset-failed systemd-binfmt
