@@ -75,7 +75,7 @@ runs:
           sudo cp -r /etc/binfmt.d /tmp/binfmt.d.backup
           for x in /usr/lib/binfmt.d/*.conf; do
             sed 's/\(:[^C:]*\)$/\1C/' "$x" | \
-              sudo tee /etc/binfmt.d/"$(basename "$x")"
+              sudo tee /etc/binfmt.d/"$(basename "$x")" >/dev/null
           done
           if ! sudo systemctl restart systemd-binfmt 2>/dev/null; then
             # Repeatedly running this action with short commands can a failure due to excessively
