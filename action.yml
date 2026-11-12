@@ -58,15 +58,34 @@ runs:
           sudo apt-get update -o Dpkg::Progress-Fancy=0
           sudo apt-get install -o Dpkg::Progress-Fancy=0 $packages
         fi
-        if ! is_installed qemu-user-binfmt-hwe && ! is_installed qemu-user-binfmt && ! is_installed qemu-user-static; then
+        if ! is_installed qemu-user-static; then
           echo "Installing dependencies to run systemd-nspawn on non-amd64 images..."
           sudo apt-get update -o Dpkg::Progress-Fancy=0
-          sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-binfmt-hwe || \
-            sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-binfmt || \
-            sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-static
+          sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-static || \
+            sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-binfmt-hwe || \
+            sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-binfmt
         fi
 
-    - name: Run PiNspawn
+    - name: Configure binfmt to allow running sudo in systemd-nspawn across architectures
+      # This is needed on cross-architecture emulation (e.g. amd64 host, but not arm64 host).
+      # See https://stackoverflow.com/a/77354286/23202949
+      shell: bash
+      run: |
+        if [ "$(uname -m)" == "x86_64" ]; then
+          sudo cp -r /etc/binfmt.d /tmp/binfmt.d.backup
+          for x in /usr/lib/binfmt.d/*.conf; do
+            sed 's/\(:[^C:]*\)$/\1C/' "$x" | \
+              sudo tee /etc/binfmt.d/"$(basename "$x")" >/dev/null
+          done
+          if ! sudo systemctl restart systemd-binfmt 2>/dev/null; then
+            # Repeatedly running this action with short commands can a failure due to excessively
+            # frequent restarts:
+            sudo systemctl reset-failed systemd-binfmt
+            sudo systemctl restart systemd-binfmt
+          fi
+        fi
+
+    - name: Run in PiNspawn
       id: run-pinspawn
       shell: bash
       env:
@@ -80,3 +99,19 @@ runs:
         INPUT_BOOT_PARTITION_MOUNT: ${{ inputs.boot-partition-mount }}
       run: |
         ${{ github.action_path }}/gha-wrapper-pinspawn.sh
+
+    - name: Revert binfmt changes
+      # This is needed on cross-architecture emulation (e.g. amd64 host, but not arm64 host).
+      # See https://stackoverflow.com/a/77354286/23202949
+      shell: bash
+      run: |
+        if [ "$(uname -m)" == "x86_64" ]; then
+          sudo rm -rf /etc/binfmt.d
+          sudo cp -r /tmp/binfmt.d.backup /etc/binfmt.d
+          if ! sudo systemctl restart systemd-binfmt 2>/dev/null; then
+            # Repeatedly running this action with short commands can a failure due to excessively
+            # frequent restarts:
+            sudo systemctl reset-failed systemd-binfmt
+            sudo systemctl restart systemd-binfmt
+          fi
+        fi
