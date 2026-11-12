@@ -61,9 +61,9 @@ runs:
         if ! is_installed qemu-user-static; then
           echo "Installing dependencies to run systemd-nspawn on non-amd64 images..."
           sudo apt-get update -o Dpkg::Progress-Fancy=0
-          sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user qemu-user-binfmt-hwe || \
-            sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user qemu-user-binfmt || \
-            sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-static
+          sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-static || \
+            sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-binfmt-hwe || \
+            sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-binfmt || \
         fi
 
     - name: Run PiNspawn
