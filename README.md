@@ -12,8 +12,7 @@ process in GitHub Actions!
 
 Note that currently only unbooted containers work correctly on GitHub's new hosted arm64 runners;
 booted systemd-nspawn containers spontaneously initiate shutdown as soon as the system boot sequence
-reaches the login prompt. Maybe that's a bug which will magically go away after the hosted arm64
-runners exit public preview (this is wishful thinking). If you want to start or interact with the
+reaches the login prompt, and the reason why is not clear. If you want to start or interact with the
 Docker daemon inside an unbooted container on an arm64 runner, you will need instantiate the
 container with the `CAP_NET_ADMIN` capability (to make iptables work as required by Docker) and then
 manually start both containerd (by launching `/usr/bin/containerd` as a background process) and the
@@ -40,7 +39,7 @@ to use systemd-nspawn with Raspberry Pi OS images.
 
 ```yaml
 - name: Install and run cowsay
-  uses: ethanjli/pinspawn-action@v0.1.5
+  uses: ethanjli/pinspawn-action@v0.1.6-beta.0
   with:
     image: rpi-os-image.img
     run: |
@@ -53,7 +52,7 @@ to use systemd-nspawn with Raspberry Pi OS images.
 
 ```yaml
 - name: Run in Python
-  uses: ethanjli/pinspawn-action@v0.1.5
+  uses: ethanjli/pinspawn-action@v0.1.6-beta.0
   with:
     image: rpi-os-image.img
     shell: python
@@ -68,7 +67,7 @@ to use systemd-nspawn with Raspberry Pi OS images.
 
 ```yaml
 - name: Run without root permissions
-  uses: ethanjli/pinspawn-action@v0.1.5
+  uses: ethanjli/pinspawn-action@v0.1.6-beta.0
   with:
     image: rpi-os-image.img
     user: pi
@@ -94,7 +93,7 @@ to use systemd-nspawn with Raspberry Pi OS images.
   run: chmod a+x figlet.sh
 
 - name: Run script directly
-  uses: ethanjli/pinspawn-action@v0.1.5
+  uses: ethanjli/pinspawn-action@v0.1.6-beta.0
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
@@ -114,7 +113,7 @@ to use systemd-nspawn with Raspberry Pi OS images.
       dtoverlay=i2c-rtc,rv3028,trickle-resistor-ohms=3000,backup-switchover-mode=1
 
 - name: Modify bootloader configuration
-  uses: ethanjli/pinspawn-action@v0.1.5
+  uses: ethanjli/pinspawn-action@v0.1.6-beta.0
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
@@ -133,7 +132,7 @@ Note: the system in the container will shut down after the specified commands fi
 
 ```yaml
 - name: Analyze systemd boot process
-  uses: ethanjli/pinspawn-action@v0.1.5
+  uses: ethanjli/pinspawn-action@v0.1.6-beta.0
   with:
     image: rpi-os-image.img
     args: --bind "$(pwd)":/run/external
@@ -159,13 +158,13 @@ Note: the system in the container will shut down after the specified commands fi
 
 ### Interact with Docker in an unbooted container
 
-Note: this example will *only* work if you run it in the `ubuntu-24.04-arm` GitHub Actions runner;
-trying to run it on `ubuntu-22.04-arm` results in an error when `dockerd` tries to start
-(`failed to start daemon: Devices cgroup isn't mounted`).
+Note: this example will *only* work if you run it in the `ubuntu-24.04-arm` or the
+`ubuntu-26.04-arm` GitHub Actions runner; trying to run it on `ubuntu-22.04-arm` results in an error
+when `dockerd` tries to start (`failed to start daemon: Devices cgroup isn't mounted`).
 
 ```yaml
 - name: Install Docker
-  uses: ethanjli/pinspawn-action@v0.1.5
+  uses: ethanjli/pinspawn-action@v0.1.6-beta.0
   with:
     image: rpi-os-image.img
     run: |
@@ -185,7 +184,7 @@ trying to run it on `ubuntu-22.04-arm` results in an error when `dockerd` tries 
         docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 - name: Pull a Docker container image
-  uses: ethanjli/pinspawn-action@v0.1.5
+  uses: ethanjli/pinspawn-action@v0.1.6-beta.0
   with:
     image: rpi-os-image.img
     args: --capability=CAP_NET_ADMIN
