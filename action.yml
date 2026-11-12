@@ -66,7 +66,7 @@ runs:
             sudo apt-get install -o Dpkg::Progress-Fancy=0 qemu-user-binfmt
         fi
 
-    - name: Configure binfmt to allow running sudo commands in systemd-nspawn
+    - name: Configure binfmt to allow running sudo in systemd-nspawn across architectures
       # This is needed on cross-architecture emulation (e.g. amd64 host, but not arm64 host).
       # See https://stackoverflow.com/a/77354286/23202949
       shell: bash
@@ -77,12 +77,15 @@ runs:
             sed 's/\(:[^C:]*\)$/\1C/' "$x" | \
               sudo tee /etc/binfmt.d/"$(basename "$x")"
           done
-          sudo systemctl restart systemd-binfmt
-          systemctl status systemd-binfmt
-          journalctl -xeu systemd-binfmt.service
+          if ! sudo systemctl restart systemd-binfmt; then
+            # Repeatedly running this action with short commands can a failure due to excessively
+            # frequent restarts:
+            sudo systemctl reset-failed systemd-binfmt
+            sudo systemctl restart systemd-binfmt
+          fi
         fi
 
-    - name: Run PiNspawn
+    - name: Run in PiNspawn
       id: run-pinspawn
       shell: bash
       env:
@@ -105,5 +108,10 @@ runs:
         if [ "$(uname -m)" == "x86_64" ]; then
           sudo rm -rf /etc/binfmt.d
           sudo cp -r /tmp/binfmt.d.backup /etc/binfmt.d
-          sudo systemctl restart systemd-binfmt
+          if ! sudo systemctl restart systemd-binfmt; then
+            # Repeatedly running this action with short commands can a failure due to excessively
+            # frequent restarts:
+            sudo systemctl reset-failed systemd-binfmt
+            sudo systemctl restart systemd-binfmt
+          fi
         fi
