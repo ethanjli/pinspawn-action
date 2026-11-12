@@ -29,14 +29,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install pinspawn-action dependencies
-        uses: ./
-        with:
-          image: rpi-os-image.img
-          args: --quiet
-          run: |
-            echo 'Installed!'
-
       - name: Download and cache base image
         id: download-base
         uses: ethanjli/cached-download-action@v0.1.1
@@ -54,6 +46,14 @@ jobs:
           size: 8G
 
       # Run shell commands as root
+
+      - name: Install pinspawn-action dependencies
+        uses: ./
+        with:
+          image: rpi-os-image.img
+          args: --quiet
+          run: |
+            echo 'Installed!'
 
       - name: Install and run cowsay
         uses: ./
